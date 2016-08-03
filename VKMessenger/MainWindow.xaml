@@ -3,16 +3,59 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:tb="http://www.hardcodet.net/taskbar"
         xmlns:local="clr-namespace:VKMessenger"
+        xmlns:model="clr-namespace:VKMessenger.Model"
+        xmlns:vkmodel="clr-namespace:VkNet.Model;assembly=VkNet"
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="1*" />
-            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="4*" />
+            <ColumnDefinition Width="5*" />
+            <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
+
+        <tb:TaskbarIcon x:Name="notifyIcon" IconSource="Images/Icons/NotifyIcon.ico" ToolTipText="hello world" />
+
+        <ListBox Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Name="dialogsListBox" Margin="5">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type model:Dialog}">
+                    <StackPanel Orientation="Horizontal" Margin="5">
+                        <Image Source="{Binding Path=Destination.Photo50}" Width="50" />
+                        <Label Content="{Binding Path=UserFullName, Mode=OneWay}" />
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <ListBox Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Name="messagesListBox" Margin="5">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type vkmodel:Message}">
+                    <Grid Margin="5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <Image Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Source="{Binding Path=Photo50}" />
+                        <Label Grid.Column="1" Grid.Row="1" Content="{Binding Path=Body}" />
+                        <Label Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" Content="{Binding Path=Date}" />
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+        
+        <TextBox Grid.Column="1" Grid.Row="1" Name="messageTextBox" Margin="5" />
+        <Button Grid.Column="2" Grid.Row="1" Name="sendButton" Margin="5" Width="75" IsDefault="True">Отправить</Button>
     </Grid>
 </Window>
