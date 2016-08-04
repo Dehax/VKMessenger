@@ -15,9 +15,10 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using VKMessenger.Model;
+using VKMessenger.ViewModel;
 using VkNet.Model;
 
-namespace VKMessenger
+namespace VKMessenger.View
 {
     public partial class MainWindow : Window
     {
@@ -35,9 +36,7 @@ namespace VKMessenger
 
             dialogsListBox.SelectionChanged += SelectDialog;
             _messenger.NewMessage += ProcessNewMessage;
-            _messenger.DialogsUpdated += UpdateDialogs;
 
-            dialogsListBox.ItemsSource = _messenger.Dialogs;
             sendButton.Click += SendMessage;
         }
 
@@ -61,8 +60,8 @@ namespace VKMessenger
         {
             string message = messageTextBox.Text;
 
-            _messenger.SendMessage(message, (Dialog)dialogsListBox.SelectedItem);
-            messagesListBox.Items.Refresh();
+            //_messenger.SendMessage(message, (Dialog)dialogsListBox.SelectedItem);
+            //messagesListBox.Items.Refresh();
 
             messageTextBox.Clear();
         }
@@ -74,11 +73,6 @@ namespace VKMessenger
             messagesListBox.Items.Refresh();
         }
 
-        private void UpdateDialogs(object sender, EventArgs e)
-        {
-            dialogsListBox.Items.Refresh();
-        }
-
         private void ProcessNewMessage(object sender, MessageEventArgs e)
         {
             notifyIcon.ShowBalloonTip(e.Message.Title, e.Message.Body, BalloonIcon.Info);
@@ -86,7 +80,7 @@ namespace VKMessenger
 
         private void MainWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            _messenger.Start();
+            dialogsListBox.DataContext = new DialogsLoader(_messenger);
         }
     }
 }

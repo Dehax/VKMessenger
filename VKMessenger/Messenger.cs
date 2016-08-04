@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using VKMessenger.Model;
+using VKMessenger.View;
 using VkNet;
 using VkNet.Enums.Filters;
 using VkNet.Model;
@@ -32,13 +33,13 @@ namespace VKMessenger
         private const string MESSAGE_TITLE = "Отправлено через VKMessenger";
 
         private VkApi _vk = new VkApi();
+        public VkApi Vk { get { return _vk; } }
 
         private List<Dialog> _dialogs = new List<Dialog>();
 
         public List<Dialog> Dialogs { get { return _dialogs; } }
 
         public event EventHandler<MessageEventArgs> NewMessage;
-        public event EventHandler DialogsUpdated;
 
         private bool _cancelRequest = false;
 
@@ -47,34 +48,34 @@ namespace VKMessenger
             Authenticate();
         }
 
-        public async void SendMessage(string message, Dialog dialog)
-        {
-            Task<long> sendMessageTask = Task.Run(() =>
-            {
-                long id = _vk.Messages.Send(new MessagesSendParams()
-                {
-                    UserId = dialog.Destination.Id,
-                    Message = message
-                });
+        //public async void SendMessage(string message, Dialog dialog)
+        //{
+        //    Task<long> sendMessageTask = Task.Run(() =>
+        //    {
+        //        long id = _vk.Messages.Send(new MessagesSendParams()
+        //        {
+        //            UserId = dialog.Destination.Id,
+        //            Message = message
+        //        });
 
-                return id;
-            });
+        //        return id;
+        //    });
 
-            long sentMessageId = await sendMessageTask;
+        //    long sentMessageId = await sendMessageTask;
 
-            Task<Message> getMessageTask = Task.Run(() =>
-            {
-                return _vk.Messages.GetById((ulong)sentMessageId);
-            });
+        //    Task<Message> getMessageTask = Task.Run(() =>
+        //    {
+        //        return _vk.Messages.GetById((ulong)sentMessageId);
+        //    });
 
-            Message messageObject = await getMessageTask;
+        //    Message messageObject = await getMessageTask;
 
-            dialog.Messages.Add(messageObject);
-        }
+        //    dialog.Messages.Add(messageObject);
+        //}
 
         public async void Start()
         {
-            LoadDialogs();
+            //LoadDialogs();
 
             await ListenMessagesAsync();
         }
@@ -131,7 +132,7 @@ namespace VKMessenger
                                         message.Body = text;
                                         message.UserId = fromId;
 
-                                        OnNewMessage(message);
+                                        //OnNewMessage(message);
                                     }
                                     break;
                             }
@@ -150,65 +151,25 @@ namespace VKMessenger
             _cancelRequest = true;
         }
 
-        protected virtual void OnNewMessage(Message message)
-        {
-            AddMessageToDialog(message);
-            NewMessage?.Invoke(this, new MessageEventArgs(message));
-        }
+        //protected virtual void OnNewMessage(Message message)
+        //{
+        //    AddMessageToDialog(message);
+        //    NewMessage?.Invoke(this, new MessageEventArgs(message));
+        //}
 
-        protected virtual void OnDialogsUpdated()
-        {
-            DialogsUpdated?.Invoke(this, EventArgs.Empty);
-        }
+        //private void AddMessageToDialog(Message message)
+        //{
+        //    for (int i = 0; i < _dialogs.Count; i++)
+        //    {
+        //        Dialog dialog = _dialogs[i];
 
-        private Task<ReadOnlyCollection<Message>> GetDialogsList()
-        {
-            return Task.Run(() =>
-            {
-                MessagesGetObject response = _vk.Messages.GetDialogs(new MessagesDialogsGetParams()
-                {
-                    Count = 10
-                });
-
-                return response.Messages;
-            });
-        }
-
-        private async void LoadDialogs()
-        {
-            ReadOnlyCollection<Message> dialogMessages = await GetDialogsList();
-
-            for (int i = 0; i < dialogMessages.Count; i++)
-            {
-                Message lastMessage = dialogMessages[i];
-
-                User destinationUser = await Task.Run(() =>
-                {
-                    Thread.Sleep(1000 / _vk.RequestsPerSecond + 1);
-                    return _vk.Users.Get(lastMessage.UserId.Value, ProfileFields.Uid | ProfileFields.FirstName | ProfileFields.LastName | ProfileFields.Photo50);
-                });
-
-                Dialog dialog = new Dialog(destinationUser, new List<Message>() { lastMessage });
-
-                _dialogs.Add(dialog);
-            }
-
-            OnDialogsUpdated();
-        }
-
-        private void AddMessageToDialog(Message message)
-        {
-            for (int i = 0; i < _dialogs.Count; i++)
-            {
-                Dialog dialog = _dialogs[i];
-
-                if (dialog.Destination.Id == message.UserId.Value)
-                {
-                    dialog.AddMessage(message);
-                    break;
-                }
-            }
-        }
+        //        if (dialog.Destination.Id == message.UserId.Value)
+        //        {
+        //            dialog.AddMessage(message);
+        //            break;
+        //        }
+        //    }
+        //}
 
         private void Authenticate()
         {

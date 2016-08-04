@@ -15,7 +15,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using VkNet.Enums.Filters;
 
-namespace VKMessenger
+namespace VKMessenger.View
 {
     public partial class AuthorizationWindow : Window
     {

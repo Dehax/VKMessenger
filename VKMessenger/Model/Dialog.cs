@@ -1,35 +1,115 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using VkNet.Model;
 
 namespace VKMessenger.Model
 {
-    public class Dialog
+    public class Dialog : INotifyPropertyChanged
     {
-        public User Destination { get; set; }
-        public List<Message> Messages { get; set; } = new List<Message>();
-
-        public string LastMessage { get { return Messages.Last().Body; } }
-        public string UserFullName
+        private IDictionary<long, VkMessage> _messages = new SortedDictionary<long, VkMessage>();
+        public IDictionary<long, VkMessage> Messages
         {
-            get
+            get { return _messages; }
+            set
             {
-                return $"{Destination.FirstName} {Destination.LastName}";
+                if (_messages != value)
+                {
+                    _messages = value;
+                    OnPropertyChanged();
+                }
             }
         }
 
-        public Dialog(User user, List<Message> messages)
+        private string _photo;
+        public string Photo
         {
-            Destination = user;
-            Messages.AddRange(messages);
+            get
+            {
+                if (IsChat)
+                {
+                    return _photo;
+                }
+                else
+                {
+                    return User.Photo50.AbsoluteUri;
+                }
+            }
+            set
+            {
+                if (_photo != value)
+                {
+                    _photo = value;
+                    OnPropertyChanged();
+                }
+            }
         }
 
-        public void AddMessage(Message message)
+        public bool IsChat
         {
-            Messages.Add(message);
+            get { return Chat != null; }
+        }
+
+        private User _user;
+        public User User
+        {
+            get { return _user; }
+            set
+            {
+                if (_user != value)
+                {
+                    _user = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private Chat _chat;
+        public Chat Chat
+        {
+            get { return _chat; }
+            set
+            {
+                if (_chat != value)
+                {
+                    _chat = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        public string Title
+        {
+            get
+            {
+                string title;
+
+                if (IsChat)
+                {
+                    title = Chat.Title;
+                }
+                else
+                {
+                    title = $"{User.FirstName} {User.LastName}";
+                }
+
+                return title;
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public Dialog()
+        {
+        }
+
+        protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

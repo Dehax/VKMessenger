@@ -59,15 +59,5 @@ namespace VKMessenger.Properties {
                 resourceCulture = value;
             }
         }
-        
-        /// <summary>
-        ///   Поиск локализованного ресурса типа System.Drawing.Icon, аналогичного (Значок).
-        /// </summary>
-        internal static System.Drawing.Icon TrayIcon {
-            get {
-                object obj = ResourceManager.GetObject("TrayIcon", resourceCulture);
-                return ((System.Drawing.Icon)(obj));
-            }
-        }
     }
 }
