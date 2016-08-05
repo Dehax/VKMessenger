@@ -94,8 +94,13 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Model\Dialogs.cs" />
+    <Compile Include="Model\Messages.cs" />
     <Compile Include="Model\VkMessage.cs" />
+    <Compile Include="ViewModel\Commands\SendMessageCommand.cs" />
+    <Compile Include="ViewModel\Design\MessagesDesignViewModel.cs" />
     <Compile Include="ViewModel\DialogsLoader.cs" />
+    <Compile Include="ViewModel\MainWindowViewModel.cs" />
+    <Compile Include="ViewModel\MessagesLoader.cs" />
     <Compile Include="View\AuthorizationWindow.xaml.cs">
       <DependentUpon>AuthorizationWindow.xaml</DependentUpon>
     </Compile>

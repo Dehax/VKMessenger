@@ -11,8 +11,8 @@ namespace VKMessenger.Model
 {
     public class Dialog : INotifyPropertyChanged
     {
-        private IDictionary<long, VkMessage> _messages = new SortedDictionary<long, VkMessage>();
-        public IDictionary<long, VkMessage> Messages
+        private Messages _messages = new Messages();
+        public Messages Messages
         {
             get { return _messages; }
             set
@@ -52,6 +52,21 @@ namespace VKMessenger.Model
         public bool IsChat
         {
             get { return Chat != null; }
+        }
+
+        public long PeerId
+        {
+            get
+            {
+                if (IsChat)
+                {
+                    return Chat.Id + 2000000000;
+                }
+                else
+                {
+                    return User.Id;
+                }
+            }
         }
 
         private User _user;

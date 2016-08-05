@@ -12,18 +12,9 @@ namespace VKMessenger.Model
     public class VkMessage : INotifyPropertyChanged
     {
         private Message _message;
-
-        public string Text
+        public Message Content
         {
-            get { return _message.Body; }
-            set
-            {
-                if (!_message.Body.Equals(value))
-                {
-                    _message.Body = value;
-                    OnPropertyChanged();
-                }
-            }
+            get { return _message; }
         }
 
         public string TimePrint

@@ -7,9 +7,10 @@
         xmlns:local="clr-namespace:VKMessenger.View"
         xmlns:model="clr-namespace:VKMessenger.Model"
         xmlns:vm="clr-namespace:VKMessenger.ViewModel"
+        xmlns:designvm="clr-namespace:VKMessenger.ViewModel.Design"
         xmlns:vkmodel="clr-namespace:VkNet.Model;assembly=VkNet"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+        Title="VK Messenger" Height="350" Width="525" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="5*" />
@@ -23,40 +24,53 @@
 
         <tb:TaskbarIcon x:Name="notifyIcon" ToolTipText="hello world" IconSource="/VKMessenger;component/Images/Icons/NotifyIcon.ico" />
 
-        <ListBox Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Name="dialogsListBox" Margin="5" ItemsSource="{Binding Path=Model.Content}">
+        <ListBox Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Name="dialogsListBox" Margin="5" ItemsSource="{Binding Path=Model.Content}" SelectedIndex="{Binding SelectedDialogIndex}" HorizontalContentAlignment="Stretch">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type model:Dialog}">
-                    <StackPanel Orientation="Horizontal" Margin="5">
-                        <Image Source="{Binding Path=Photo, Mode=OneWay}" Width="50" />
-                        <Label Content="{Binding Path=Title, Mode=OneWay}" />
-                    </StackPanel>
+                    <Border BorderThickness="1" BorderBrush="Black" Margin="5">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+
+                            <Image Grid.Column="0" Grid.Row="0" Source="{Binding Path=Photo, Mode=OneWay}" Width="50" />
+                            <Label Grid.Column="1" Grid.Row="0" Content="{Binding Path=Title, Mode=OneWay}" />
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <ListBox Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Name="messagesListBox" Margin="5">
+        <ListBox Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Name="messagesListBox" Margin="5" HorizontalContentAlignment="Stretch" d:DataContext="{d:DesignInstance Type=designvm:MessagesDesignViewModel, IsDesignTimeCreatable=True}" ItemsSource="{Binding Messages}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListBox.ItemTemplate>
-                <DataTemplate DataType="{x:Type vkmodel:Message}">
-                    <Grid Margin="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition />
-                        </Grid.RowDefinitions>
+                <DataTemplate DataType="{x:Type model:VkMessage}">
+                    <Border BorderThickness="1" BorderBrush="Black" Margin="3">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
 
-                        <Image Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Source="{Binding Path=Photo50}" />
-                        <Label Grid.Column="1" Grid.Row="1" Content="{Binding Path=Body}" />
-                        <Label Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" Content="{Binding Path=Date}" />
-                    </Grid>
+                            <Image Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Width="50" Source="{Binding Content.Photo50}" />
+                            <Label Grid.Column="1" Grid.Row="0" Content="{Binding Title}" />
+                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Content.Body}" TextWrapping="Wrap" />
+                            <Label Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" Content="{Binding TimePrint}" />
+                        </Grid>
+                    </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        
-        <TextBox Grid.Column="1" Grid.Row="1" Name="messageTextBox" Margin="5" />
-        <Button Grid.Column="2" Grid.Row="1" Name="sendButton" Margin="5" Width="75" IsDefault="True">Отправить</Button>
+
+        <TextBox Grid.Column="1" Grid.Row="1" Name="messageTextBox" Margin="5" Text="{Binding MessageText, UpdateSourceTrigger=PropertyChanged}" />
+        <Button Grid.Column="2" Grid.Row="1" Name="sendButton" Margin="5" Width="75" IsDefault="True" Command="{Binding SendMessageCommand}">Отправить</Button>
     </Grid>
 </Window>

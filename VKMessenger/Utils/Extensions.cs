@@ -5,6 +5,7 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using VkNet;
 
 namespace VKMessenger.Utils
 {
@@ -28,6 +29,16 @@ namespace VKMessenger.Utils
                     
                     throw;
                 }
+            }
+        }
+
+        public static void SleepIfTooManyRequests(VkApi vk)
+        {
+            int delay = 1000 / vk.RequestsPerSecond + 1;
+            int timespan = vk.LastInvokeTimeSpan.HasValue ? (int)vk.LastInvokeTimeSpan.Value.TotalMilliseconds + 1 : 0;
+            if (timespan < delay)
+            {
+                Thread.Sleep(delay - timespan);
             }
         }
     }

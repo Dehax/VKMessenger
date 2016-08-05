@@ -30,7 +30,7 @@ namespace VKMessenger
 
     public class Messenger
     {
-        private const string MESSAGE_TITLE = "Отправлено через VKMessenger";
+        //private const string MESSAGE_TITLE = "Отправлено через VKMessenger";
 
         private VkApi _vk = new VkApi();
         public VkApi Vk { get { return _vk; } }
@@ -48,35 +48,25 @@ namespace VKMessenger
             Authenticate();
         }
 
-        //public async void SendMessage(string message, Dialog dialog)
-        //{
-        //    Task<long> sendMessageTask = Task.Run(() =>
-        //    {
-        //        long id = _vk.Messages.Send(new MessagesSendParams()
-        //        {
-        //            UserId = dialog.Destination.Id,
-        //            Message = message
-        //        });
+        public Task<long> SendMessage(string message, Dialog dialog)
+        {
+            Task<long> sendMessageTask = Task.Run(() =>
+            {
+                Utils.Extensions.SleepIfTooManyRequests(_vk);
+                long id = _vk.Messages.Send(new MessagesSendParams()
+                {
+                    PeerId = dialog.PeerId,
+                    Message = message
+                });
 
-        //        return id;
-        //    });
+                return id;
+            });
 
-        //    long sentMessageId = await sendMessageTask;
-
-        //    Task<Message> getMessageTask = Task.Run(() =>
-        //    {
-        //        return _vk.Messages.GetById((ulong)sentMessageId);
-        //    });
-
-        //    Message messageObject = await getMessageTask;
-
-        //    dialog.Messages.Add(messageObject);
-        //}
+            return sendMessageTask;
+        }
 
         public async void Start()
         {
-            //LoadDialogs();
-
             await ListenMessagesAsync();
         }
 
@@ -132,7 +122,7 @@ namespace VKMessenger
                                         message.Body = text;
                                         message.UserId = fromId;
 
-                                        //OnNewMessage(message);
+                                        OnNewMessage(message);
                                     }
                                     break;
                             }
@@ -151,25 +141,10 @@ namespace VKMessenger
             _cancelRequest = true;
         }
 
-        //protected virtual void OnNewMessage(Message message)
-        //{
-        //    AddMessageToDialog(message);
-        //    NewMessage?.Invoke(this, new MessageEventArgs(message));
-        //}
-
-        //private void AddMessageToDialog(Message message)
-        //{
-        //    for (int i = 0; i < _dialogs.Count; i++)
-        //    {
-        //        Dialog dialog = _dialogs[i];
-
-        //        if (dialog.Destination.Id == message.UserId.Value)
-        //        {
-        //            dialog.AddMessage(message);
-        //            break;
-        //        }
-        //    }
-        //}
+        protected virtual void OnNewMessage(Message message)
+        {
+            NewMessage?.Invoke(this, new MessageEventArgs(message));
+        }
 
         private void Authenticate()
         {

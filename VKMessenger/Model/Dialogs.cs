@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -10,8 +11,8 @@ namespace VKMessenger.Model
 {
     public class Dialogs : INotifyPropertyChanged
     {
-        private IList<Dialog> _dialogs = new List<Dialog>();
-        public IList<Dialog> Content
+        private ObservableCollection<Dialog> _dialogs = new ObservableCollection<Dialog>();
+        public ObservableCollection<Dialog> Content
         {
             get { return _dialogs; }
             set
@@ -33,10 +34,7 @@ namespace VKMessenger.Model
 
         public Dialogs(IEnumerable<Dialog> dialogs)
         {
-            foreach (Dialog dialog in dialogs)
-            {
-                _dialogs.Add(dialog);
-            }
+            _dialogs = new ObservableCollection<Dialog>(dialogs);
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")

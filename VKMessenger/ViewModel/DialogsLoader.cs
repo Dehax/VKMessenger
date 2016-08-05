@@ -20,7 +20,7 @@ namespace VKMessenger.ViewModel
         private Messenger _messenger;
         private VkApi Vk { get { return _messenger.Vk; } }
 
-        private Dialogs _model;
+        private Dialogs _model = new Dialogs();
         public Dialogs Model
         {
             get { return _model; }
@@ -29,6 +29,26 @@ namespace VKMessenger.ViewModel
                 _model = value;
                 OnPropertyChanged();
             }
+        }
+
+        private int _selectedDialogIndex = -1;
+        public int SelectedDialogIndex
+        {
+            get { return _selectedDialogIndex; }
+            set
+            {
+                if (_selectedDialogIndex != value)
+                {
+                    _selectedDialogIndex = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        //private Dialog _selectedDialog;
+        public Dialog SelectedDialog
+        {
+            get { return SelectedDialogIndex >= 0 ? Model.Content[SelectedDialogIndex] : null; }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -43,7 +63,6 @@ namespace VKMessenger.ViewModel
         private async void LoadDialogs()
         {
             ReadOnlyCollection<Message> dialogMessages = await GetDialogsList();
-            List<Dialog> dialogs = new List<Dialog>();
 
             for (int i = 0; i < dialogMessages.Count; i++)
             {
@@ -62,16 +81,16 @@ namespace VKMessenger.ViewModel
                 }
 
 
-                dialogs.Add(dialog);
+                Model.Content.Add(dialog);
             }
-
-            Model = new Dialogs(dialogs);
         }
 
         private Task<User> LoadUser(long userId)
         {
             return Task.Run(() =>
             {
+                Utils.Extensions.SleepIfTooManyRequests(Vk);
+
                 return Vk.Users.Get(userId, ProfileFields.FirstName | ProfileFields.LastName | ProfileFields.Photo50);
             });
         }
@@ -80,6 +99,8 @@ namespace VKMessenger.ViewModel
         {
             return Task.Run(() =>
             {
+                Utils.Extensions.SleepIfTooManyRequests(Vk);
+
                 return Vk.Messages.GetChat(chatId);
             });
         }
@@ -88,6 +109,8 @@ namespace VKMessenger.ViewModel
         {
             return Task.Run(() =>
             {
+                Utils.Extensions.SleepIfTooManyRequests(Vk);
+
                 MessagesGetObject response = Vk.Messages.GetDialogs(new MessagesDialogsGetParams()
                 {
                     Count = 10

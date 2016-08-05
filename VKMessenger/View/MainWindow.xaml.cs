@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -30,14 +31,17 @@ namespace VKMessenger.View
 
             InitializeComponent();
 
-            Loaded += MainWindow_Loaded;
+            MainWindowViewModel viewModel = new MainWindowViewModel(_messenger, Dispatcher);
+            DataContext = viewModel;
+            dialogsListBox.DataContext = viewModel.DialogsViewModel;
+            dialogsListBox.ItemsSource = viewModel.DialogsViewModel.Model.Content;
+            messagesListBox.DataContext = viewModel.MessagesViewModel;
+            messagesListBox.ItemsSource = viewModel.MessagesViewModel.Model.Content;
+            
             StateChanged += MainWindow_StateChanged;
             notifyIcon.TrayMouseDoubleClick += NotifyIcon_TrayMouseDoubleClick;
-
-            dialogsListBox.SelectionChanged += SelectDialog;
+            
             _messenger.NewMessage += ProcessNewMessage;
-
-            sendButton.Click += SendMessage;
         }
 
         private void NotifyIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)
@@ -56,31 +60,9 @@ namespace VKMessenger.View
             }
         }
 
-        private void SendMessage(object sender, RoutedEventArgs e)
-        {
-            string message = messageTextBox.Text;
-
-            //_messenger.SendMessage(message, (Dialog)dialogsListBox.SelectedItem);
-            //messagesListBox.Items.Refresh();
-
-            messageTextBox.Clear();
-        }
-
-        private void SelectDialog(object sender, SelectionChangedEventArgs e)
-        {
-            Dialog dialog = (Dialog)e.AddedItems[0];
-            messagesListBox.ItemsSource = dialog.Messages;
-            messagesListBox.Items.Refresh();
-        }
-
         private void ProcessNewMessage(object sender, MessageEventArgs e)
         {
             notifyIcon.ShowBalloonTip(e.Message.Title, e.Message.Body, BalloonIcon.Info);
-        }
-
-        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
-        {
-            dialogsListBox.DataContext = new DialogsLoader(_messenger);
         }
     }
 }
