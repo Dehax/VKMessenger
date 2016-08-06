@@ -37,11 +37,22 @@ namespace VKMessenger.View
             dialogsListBox.ItemsSource = viewModel.DialogsViewModel.Model.Content;
             messagesListBox.DataContext = viewModel.MessagesViewModel;
             messagesListBox.ItemsSource = viewModel.MessagesViewModel.Model.Content;
+
+            viewModel.NewMessage += ReceiveNewMessage;
             
             StateChanged += MainWindow_StateChanged;
             notifyIcon.TrayMouseDoubleClick += NotifyIcon_TrayMouseDoubleClick;
-            
-            _messenger.NewMessage += ProcessNewMessage;
+        }
+
+        private void ReceiveNewMessage(object sender, NewMessageEventArgs e)
+        {
+            string title = e.Dialog != null ? e.Dialog.Title : "Новый диалог";
+            string message = e.Message.Content.Body;
+
+            Dispatcher.Invoke(() =>
+            {
+                notifyIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
+            });
         }
 
         private void NotifyIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)
@@ -58,11 +69,6 @@ namespace VKMessenger.View
                     Hide();
                     break;
             }
-        }
-
-        private void ProcessNewMessage(object sender, MessageEventArgs e)
-        {
-            notifyIcon.ShowBalloonTip(e.Message.Title, e.Message.Body, BalloonIcon.Info);
         }
     }
 }

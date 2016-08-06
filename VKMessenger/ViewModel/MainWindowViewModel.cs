@@ -13,6 +13,18 @@ using VkNet.Model;
 
 namespace VKMessenger.ViewModel
 {
+    public class NewMessageEventArgs : EventArgs
+    {
+        public Dialog Dialog { get; set; }
+        public VkMessage Message { get; set; }
+
+        public NewMessageEventArgs(Dialog dialog, VkMessage message)
+        {
+            Dialog = dialog;
+            Message = message;
+        }
+    }
+
     public class MainWindowViewModel : INotifyPropertyChanged
     {
         private Messenger _messenger;
@@ -66,6 +78,8 @@ namespace VKMessenger.ViewModel
 
         public SendMessageCommand SendMessageCommand { get; set; }
 
+        public event EventHandler<NewMessageEventArgs> NewMessage;
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         public MainWindowViewModel(Messenger messenger, Dispatcher dispatcher)
@@ -96,6 +110,20 @@ namespace VKMessenger.ViewModel
                     currentDialog.Messages.Content.Add(new VkMessage(message));
                 });
             }
+
+            Dialog dialogForMessage = null;
+
+            foreach (Dialog dialog in DialogsViewModel.Model.Content)
+            {
+                if ((dialog.IsChat && dialog.Chat.Id == message.ChatId)
+                    || (!dialog.IsChat && dialog.User.Id == message.UserId.Value))
+                {
+                    dialogForMessage = dialog;
+                    break;
+                }
+            }
+
+            OnNewMessage(dialogForMessage, new VkMessage(message));
         }
 
         private void DialogsViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -112,6 +140,11 @@ namespace VKMessenger.ViewModel
         protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        protected virtual void OnNewMessage(Dialog dialog, VkMessage message)
+        {
+            NewMessage?.Invoke(this, new NewMessageEventArgs(dialog, message));
         }
 
         private async void SendMessageExecute()
