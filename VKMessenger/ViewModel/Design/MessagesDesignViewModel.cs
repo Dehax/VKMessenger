@@ -15,19 +15,19 @@ namespace VKMessenger.ViewModel.Design
         {
             new VkMessage(new Message()
             {
-                Body = "Hello, WOrld!",
+                Body = "Тестовое сообщение 1.",
                 Date = DateTime.Now
-            }),
+            }, null),
             new VkMessage(new Message()
             {
-                Body = "Hello, WOrld!",
+                Body = "Тестовое сообщение 2.",
                 Date = DateTime.Now
-            }),
+            }, null),
             new VkMessage(new Message()
             {
-                Body = "Hello, WOrld У тебя uBlock блокирует в новом дизайне ВК слева рекламу?",
+                Body = "Очень длинное тестовое сообщение.\nС переносом строки.\nПозволяет протестировать ширину шаблона.",
                 Date = DateTime.Now
-            })
+            }, null)
         };
         public ObservableCollection<VkMessage> Messages
         {
@@ -36,11 +36,6 @@ namespace VKMessenger.ViewModel.Design
 
         public MessagesDesignViewModel()
         {
-            Messages.Add(new VkMessage(new Message()
-            {
-                Body = "Dehax none",
-                Date = DateTime.Now
-            }));
         }
     }
 }

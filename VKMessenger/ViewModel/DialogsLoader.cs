@@ -68,7 +68,7 @@ namespace VKMessenger.ViewModel
             {
                 Message lastMessage = dialogMessages[i];
                 Dialog dialog = new Dialog();
-                VkMessage message = new VkMessage(lastMessage);
+                VkMessage message = new VkMessage(lastMessage, dialog);
 
                 if (lastMessage.ChatId.HasValue)
                 {
