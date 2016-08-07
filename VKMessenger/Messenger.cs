@@ -111,7 +111,14 @@ namespace VKMessenger
                                         string text = (string)eventArray[6];
 
                                         Message message = new Message();
+                                        message.Id = messageId;
                                         message.FromId = fromId;
+
+                                        if (fromId >= 2000000000)
+                                        {
+                                            message.ChatId = fromId - 2000000000;
+                                        }
+
                                         message.Date = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(timestamp);
                                         message.Title = subject;
                                         message.Body = text;
