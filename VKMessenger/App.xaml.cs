@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using VKMessenger.View;
+using VKMessenger.ViewModel;
 
 namespace VKMessenger
 {
@@ -22,16 +23,27 @@ namespace VKMessenger
 
         public App()
         {
-            ShutdownMode = ShutdownMode.OnMainWindowClose;
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
             Startup += App_Startup;
             DispatcherUnhandledException += ProcessUnhandledException;
         }
 
         private void App_Startup(object sender, StartupEventArgs e)
         {
-            MainWindow mainWindow = new MainWindow(_messenger);
-            MainWindow = mainWindow;
-            mainWindow.Show();
+            if (_messenger.Authenticate())
+            {
+                MessageBox.Show("Авторизация прошла успешно!", "Авторизовано");
+
+                MainWindow mainWindow = new MainWindow(_messenger);
+                MainWindow = mainWindow;
+                mainWindow.Show();
+                mainWindow.Closed += MainWindow_Closed;
+            }
+        }
+
+        private void MainWindow_Closed(object sender, EventArgs e)
+        {
+            Shutdown();
         }
 
         private void ProcessUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

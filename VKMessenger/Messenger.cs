@@ -35,17 +35,12 @@ namespace VKMessenger
         private VkApi _vk = new VkApi();
         public VkApi Vk { get { return _vk; } }
 
-        private List<Dialog> _dialogs = new List<Dialog>();
-
-        public List<Dialog> Dialogs { get { return _dialogs; } }
-
         public event EventHandler<MessageEventArgs> NewMessage;
 
         private bool _cancelRequest = false;
 
         public Messenger()
         {
-            Authenticate();
         }
 
         public Task<long> SendMessage(string message, Dialog dialog)
@@ -146,7 +141,7 @@ namespace VKMessenger
             NewMessage?.Invoke(this, new MessageEventArgs(message));
         }
 
-        private void Authenticate()
+        public bool Authenticate()
         {
             string accessToken = Properties.Settings.Default.AccessToken;
 
@@ -170,10 +165,14 @@ namespace VKMessenger
                 {
                     Properties.Settings.Default.AccessToken = accessToken;
                     Properties.Settings.Default.Save();
-
-                    MessageBox.Show("Авторизация прошла успешно!", "Авторизовано");
+                }
+                else
+                {
+                    return false;
                 }
             }
+
+            return true;
         }
     }
 }
