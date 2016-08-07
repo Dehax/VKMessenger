@@ -41,18 +41,18 @@ namespace VKMessenger.Model
             }
         }
 
-        public Messages(IEnumerable<Message> messages)
+        public Messages(IEnumerable<Message> messages, Dialog dialog)
         {
-            SetData(messages);
+            SetData(messages, dialog);
         }
 
-        public void SetData(IEnumerable<Message> messages)
+        public void SetData(IEnumerable<Message> messages, Dialog dialog)
         {
             _messages.Clear();
 
             foreach (Message message in messages)
             {
-                _messages.Insert(0, new VkMessage(message));
+                _messages.Insert(0, new VkMessage(message, dialog));
             }
         }
 

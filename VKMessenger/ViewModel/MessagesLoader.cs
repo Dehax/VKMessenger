@@ -58,7 +58,7 @@ namespace VKMessenger.ViewModel
         {
             long peerId = Dialog.PeerId;
             MessagesGetObject history = await LoadHistory(peerId);
-            Model.SetData(history.Messages);
+            Model.SetData(history.Messages, Dialog);
             Dialog.Messages.Content = Model.Content;
         }
 

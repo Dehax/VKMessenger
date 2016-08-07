@@ -107,7 +107,7 @@ namespace VKMessenger.ViewModel
             {
                 Dispatcher.Invoke(() =>
                 {
-                    currentDialog.Messages.Content.Add(new VkMessage(message));
+                    currentDialog.Messages.Content.Add(new VkMessage(message, currentDialog));
                 });
             }
 
@@ -123,7 +123,7 @@ namespace VKMessenger.ViewModel
                 }
             }
 
-            OnNewMessage(dialogForMessage, new VkMessage(message));
+            OnNewMessage(dialogForMessage, new VkMessage(message, dialogForMessage));
         }
 
         private void DialogsViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -160,7 +160,7 @@ namespace VKMessenger.ViewModel
                 });
 
                 Message messageObject = await getMessageTask;
-                MessagesViewModel.Model.Content.Add(new VkMessage(messageObject));
+                MessagesViewModel.Model.Content.Add(new VkMessage(messageObject, DialogsViewModel.SelectedDialog));
                 MessageText = string.Empty;
             }
             catch (Exception)

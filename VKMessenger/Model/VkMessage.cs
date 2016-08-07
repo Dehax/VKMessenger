@@ -17,9 +17,15 @@ namespace VKMessenger.Model
             get { return _message; }
         }
 
+        private Dialog _dialog;
+        public Dialog Dialog
+        {
+            get { return _dialog; }
+        }
+
         public string TimePrint
         {
-            get { return _message.Date?.ToString("HH:mm:ss dd.MMM.yyyy"); }
+            get { return _message.Date?.ToString("HH:mm:ss dd.MM.yyyy"); }
         }
 
         public string Title
@@ -27,11 +33,25 @@ namespace VKMessenger.Model
             get { return _message.Title; }
         }
 
+        public string Image
+        {
+            get
+            {
+                if (Dialog.IsChat)
+                {
+                    return Dialog.Photo;
+                }
+
+                return null;
+            }
+        }
+
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public VkMessage(Message message)
+        public VkMessage(Message message, Dialog dialog)
         {
             _message = message;
+            _dialog = dialog;
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
