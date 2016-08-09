@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using VKMessenger.Properties;
 using VKMessenger.View;
 using VKMessenger.ViewModel;
 
@@ -24,13 +25,14 @@ namespace VKMessenger
         public App()
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            Startup += App_Startup;
             DispatcherUnhandledException += ProcessUnhandledException;
         }
 
-        private void App_Startup(object sender, StartupEventArgs e)
+        protected override void OnStartup(StartupEventArgs e)
         {
-            if (_messenger.Authenticate())
+            base.OnStartup(e);
+
+            if (Authenticate())
             {
                 MessageBox.Show("Авторизация прошла успешно!", "Авторизовано");
 
@@ -39,6 +41,41 @@ namespace VKMessenger
                 mainWindow.Show();
                 mainWindow.Closed += MainWindow_Closed;
             }
+            else
+            {
+                Shutdown();
+            }
+        }
+
+        public bool Authenticate()
+        {
+            string accessToken = Settings.Default.AccessToken;
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                if (!_messenger.Authorize(accessToken))
+                {
+                    throw new Exception("Неправильный маркер доступа!");
+                }
+            }
+            else
+            {
+                AuthorizationWindow authWindow = new AuthorizationWindow();
+                authWindow.ShowDialog();
+                accessToken = authWindow.AccessToken;
+
+                if (_messenger.Authorize(accessToken))
+                {
+                    Settings.Default.AccessToken = accessToken;
+                    Settings.Default.Save();
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void MainWindow_Closed(object sender, EventArgs e)

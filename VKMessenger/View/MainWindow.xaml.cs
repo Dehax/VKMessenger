@@ -31,7 +31,7 @@ namespace VKMessenger.View
 
             InitializeComponent();
 
-            MainWindowViewModel viewModel = new MainWindowViewModel(_messenger, Dispatcher);
+            MainWindowViewModel viewModel = new MainWindowViewModel(_messenger);
             DataContext = viewModel;
             dialogsListBox.DataContext = viewModel.DialogsViewModel;
             dialogsListBox.ItemsSource = viewModel.DialogsViewModel.Model.Content;

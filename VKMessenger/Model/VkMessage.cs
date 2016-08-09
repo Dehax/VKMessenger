@@ -16,12 +16,10 @@ namespace VKMessenger.Model
         {
             get { return _message; }
         }
+        
+        public Dialog Dialog { get; set; }
 
-        private Dialog _dialog;
-        public Dialog Dialog
-        {
-            get { return _dialog; }
-        }
+        public User Author { get; set; }
 
         public string TimePrint
         {
@@ -37,21 +35,23 @@ namespace VKMessenger.Model
         {
             get
             {
-                if (Dialog.IsChat)
-                {
-                    return Dialog.Photo;
-                }
-
-                return null;
+                return Author?.Photo50.AbsoluteUri;
             }
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public VkMessage()
+        {
+            _message = new Message();
+        }
+
         public VkMessage(Message message, Dialog dialog)
         {
             _message = message;
-            _dialog = dialog;
+            Dialog = dialog;
+
+            //dialog.Messages.Content.Add(this);
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")

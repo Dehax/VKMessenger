@@ -73,19 +73,14 @@ namespace VKMessenger.ViewModel
             }
         }
 
-        private Dispatcher _dispatcher;
-        public Dispatcher Dispatcher { get { return _dispatcher; } }
-
         public SendMessageCommand SendMessageCommand { get; set; }
 
         public event EventHandler<NewMessageEventArgs> NewMessage;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public MainWindowViewModel(Messenger messenger, Dispatcher dispatcher)
+        public MainWindowViewModel(Messenger messenger)
         {
-            _dispatcher = dispatcher;
-
             _messenger = messenger;
             _messenger.NewMessage += ReceiveNewMessage;
             _messenger.Start();
@@ -98,16 +93,17 @@ namespace VKMessenger.ViewModel
 
         private void ReceiveNewMessage(object sender, MessageEventArgs e)
         {
-            Message message = e.Message;
+            VkMessage message = e.Message;
             Dialog currentDialog = DialogsViewModel.SelectedDialog;
 
             if (currentDialog != null
-                && ((currentDialog.IsChat && currentDialog.Chat.Id == message.ChatId)
-                || (!currentDialog.IsChat && currentDialog.User.Id == message.UserId.Value)))
+                && ((currentDialog.IsChat && currentDialog.Chat.Id == message.Content.ChatId)
+                || (!currentDialog.IsChat && currentDialog.User.Id == message.Content.UserId.Value)))
             {
-                Dispatcher.Invoke(() =>
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    currentDialog.Messages.Content.Add(new VkMessage(message, currentDialog));
+                    message.Dialog = currentDialog;
+                    currentDialog.Messages.Content.Add(message);
                 });
             }
 
@@ -115,15 +111,15 @@ namespace VKMessenger.ViewModel
 
             foreach (Dialog dialog in DialogsViewModel.Model.Content)
             {
-                if ((dialog.IsChat && dialog.Chat.Id == message.ChatId)
-                    || (!dialog.IsChat && dialog.User.Id == message.UserId.Value))
+                if ((dialog.IsChat && dialog.Chat.Id == message.Content.ChatId)
+                    || (!dialog.IsChat && dialog.User.Id == message.Content.UserId.Value))
                 {
                     dialogForMessage = dialog;
                     break;
                 }
             }
 
-            OnNewMessage(dialogForMessage, new VkMessage(message, dialogForMessage));
+            OnNewMessage(dialogForMessage, message);
         }
 
         private void DialogsViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)

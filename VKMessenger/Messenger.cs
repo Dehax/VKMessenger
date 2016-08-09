@@ -20,9 +20,9 @@ namespace VKMessenger
 {
     public class MessageEventArgs : EventArgs
     {
-        public Message Message { get; set; }
+        public VkMessage Message { get; set; }
 
-        public MessageEventArgs(Message message)
+        public MessageEventArgs(VkMessage message)
         {
             Message = message;
         }
@@ -30,8 +30,6 @@ namespace VKMessenger
 
     public class Messenger
     {
-        //private const string MESSAGE_TITLE = "Отправлено через VKMessenger";
-
         private VkApi _vk = new VkApi();
         public VkApi Vk { get { return _vk; } }
 
@@ -47,8 +45,9 @@ namespace VKMessenger
         {
             Task<long> sendMessageTask = Task.Run(() =>
             {
-                Utils.Extensions.SleepIfTooManyRequests(_vk);
-                long id = _vk.Messages.Send(new MessagesSendParams()
+                Utils.Extensions.SleepIfTooManyRequests(Vk);
+
+                long id = Vk.Messages.Send(new MessagesSendParams()
                 {
                     PeerId = dialog.PeerId,
                     Message = message
@@ -65,11 +64,35 @@ namespace VKMessenger
             await ListenMessagesAsync();
         }
 
+        public void Stop()
+        {
+            _cancelRequest = true;
+        }
+
+        public bool Authorize(string accessToken)
+        {
+            Vk.Authorize(accessToken);
+
+            bool authorized = Vk.IsAuthorized;
+
+            if (authorized)
+            {
+                LoadUserIdAsync();
+            }
+
+            return authorized;
+        }
+
+        protected virtual void OnNewMessage(VkMessage message)
+        {
+            NewMessage?.Invoke(this, new MessageEventArgs(message));
+        }
+
         private Task ListenMessagesAsync()
         {
             return Task.Run(async () =>
             {
-                LongPollServerResponse longPoll = _vk.Messages.GetLongPollServer(true, true);
+                LongPollServerResponse longPoll = Vk.Messages.GetLongPollServer(true, true);
 
                 string longPollUrl = @"https://{0}?act=a_check&key={1}&ts={2}&wait=25";
                 ulong ts = longPoll.Ts;
@@ -110,19 +133,28 @@ namespace VKMessenger
                                         string subject = (string)eventArray[5];
                                         string text = (string)eventArray[6];
 
-                                        Message message = new Message();
-                                        message.Id = messageId;
-                                        message.FromId = fromId;
+                                        VkMessage message = new VkMessage();
+                                        message.Content.Id = messageId;
+                                        message.Content.FromId = fromId;
 
                                         if (fromId >= 2000000000)
                                         {
-                                            message.ChatId = fromId - 2000000000;
+                                            message.Content.ChatId = fromId - 2000000000;
+                                        }
+                                        else
+                                        {
+                                            message.Author = await Task.Run(() =>
+                                            {
+                                                Utils.Extensions.SleepIfTooManyRequests(Vk);
+
+                                                return Vk.Users.Get(fromId);
+                                            });
                                         }
 
-                                        message.Date = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(timestamp);
-                                        message.Title = subject;
-                                        message.Body = text;
-                                        message.UserId = fromId;
+                                        message.Content.Date = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(timestamp);
+                                        message.Content.Title = subject;
+                                        message.Content.Body = text;
+                                        message.Content.UserId = fromId;
 
                                         OnNewMessage(message);
                                     }
@@ -138,48 +170,14 @@ namespace VKMessenger
             });
         }
 
-        public void Stop()
+        private async void LoadUserIdAsync()
         {
-            _cancelRequest = true;
-        }
-
-        protected virtual void OnNewMessage(Message message)
-        {
-            NewMessage?.Invoke(this, new MessageEventArgs(message));
-        }
-
-        public bool Authenticate()
-        {
-            string accessToken = Properties.Settings.Default.AccessToken;
-
-            if (!string.IsNullOrWhiteSpace(accessToken))
+            Vk.UserId = await Task.Run(() =>
             {
-                _vk.Authorize(accessToken);
+                Utils.Extensions.SleepIfTooManyRequests(Vk);
 
-                if (!_vk.IsAuthorized)
-                {
-                    throw new Exception("Неправильный маркер доступа!");
-                }
-            }
-            else
-            {
-                AuthorizationWindow authWindow = new AuthorizationWindow();
-                authWindow.ShowDialog();
-                accessToken = authWindow.AccessToken;
-                _vk.Authorize(accessToken);
-
-                if (_vk.IsAuthorized)
-                {
-                    Properties.Settings.Default.AccessToken = accessToken;
-                    Properties.Settings.Default.Save();
-                }
-                else
-                {
-                    return false;
-                }
-            }
-
-            return true;
+                return Vk.Users.Get(new long[] { })[0].Id;
+            });
         }
     }
 }
