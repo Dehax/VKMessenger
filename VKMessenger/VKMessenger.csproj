@@ -100,6 +100,7 @@
     <Compile Include="Model\Messages.cs" />
     <Compile Include="Model\VkMessage.cs" />
     <Compile Include="ViewModel\Commands\SendMessageCommand.cs" />
+    <Compile Include="ViewModel\Design\DialogsDesignViewModel.cs" />
     <Compile Include="ViewModel\Design\MessagesDesignViewModel.cs" />
     <Compile Include="ViewModel\DialogsLoader.cs" />
     <Compile Include="ViewModel\MainWindowViewModel.cs" />

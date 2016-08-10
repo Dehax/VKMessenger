@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -24,6 +25,7 @@ namespace VKMessenger.View
     public partial class MainWindow : Window
     {
         private Messenger _messenger;
+        private MainWindowViewModel _viewModel;
 
         public MainWindow(Messenger messenger)
         {
@@ -31,14 +33,14 @@ namespace VKMessenger.View
 
             InitializeComponent();
 
-            MainWindowViewModel viewModel = new MainWindowViewModel(_messenger);
-            DataContext = viewModel;
-            dialogsListBox.DataContext = viewModel.DialogsViewModel;
-            dialogsListBox.ItemsSource = viewModel.DialogsViewModel.Model.Content;
-            messagesListBox.DataContext = viewModel.MessagesViewModel;
-            messagesListBox.ItemsSource = viewModel.MessagesViewModel.Model.Content;
+            _viewModel = new MainWindowViewModel(_messenger);
+            DataContext = _viewModel;
+            dialogsListBox.DataContext = _viewModel.DialogsViewModel;
+            dialogsListBox.ItemsSource = _viewModel.DialogsViewModel.Model.Content;
+            messagesListBox.DataContext = _viewModel.MessagesViewModel;
+            messagesListBox.ItemsSource = _viewModel.MessagesViewModel.Model.Content;
 
-            viewModel.NewMessage += ReceiveNewMessage;
+            _viewModel.NewMessage += ReceiveNewMessage;
             
             StateChanged += MainWindow_StateChanged;
             notifyIcon.TrayMouseDoubleClick += NotifyIcon_TrayMouseDoubleClick;
@@ -46,13 +48,24 @@ namespace VKMessenger.View
 
         private void ReceiveNewMessage(object sender, NewMessageEventArgs e)
         {
-            string title = e.Dialog != null ? e.Dialog.Title : "Новый диалог";
-            string message = e.Message.Content.Body;
-
-            Dispatcher.Invoke(() =>
+            if (e.Message.Content.FromId != Messenger.User.Id)
             {
-                notifyIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
-            });
+                string title = e.Dialog != null ? e.Dialog.Title : "Новый диалог";
+                string message = e.Message.Content.Body;
+
+                Dispatcher.Invoke(() =>
+                {
+                    notifyIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
+                });
+            }
+
+            if (e.Dialog == _viewModel.DialogsViewModel.SelectedDialog)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    messagesListBox.ScrollIntoView(messagesListBox.Items[messagesListBox.Items.Count - 1]);
+                });
+            }
         }
 
         private void NotifyIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)

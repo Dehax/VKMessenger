@@ -57,8 +57,9 @@ namespace VKMessenger.ViewModel
         protected virtual async void OnDialogChanged()
         {
             long peerId = Dialog.PeerId;
-            MessagesGetObject history = await LoadHistory(peerId);
-            Model.SetData(history.Messages, Dialog);
+            List<Message> messages = await LoadHistory(peerId);
+
+            Model.SetData(messages, Dialog);
             Dialog.Messages.Content = Model.Content;
         }
 
@@ -67,17 +68,22 @@ namespace VKMessenger.ViewModel
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
-        private Task<MessagesGetObject> LoadHistory(long peerId)
+        private Task<List<Message>> LoadHistory(long peerId)
         {
             return Task.Run(() =>
             {
-                Utils.Extensions.SleepIfTooManyRequests(Vk);
+                List<Message> messages = new List<Message>();
 
-                return Vk.Messages.GetHistory(new MessagesGetHistoryParams()
+                Utils.Extensions.BeginVkInvoke(Vk);
+                MessagesGetObject history = Vk.Messages.GetHistory(new MessagesGetHistoryParams()
                 {
                     PeerId = peerId,
                     Count = 10
                 });
+                Utils.Extensions.EndVkInvoke();
+                messages.AddRange(history.Messages);
+
+                return messages;
             });
         }
     }

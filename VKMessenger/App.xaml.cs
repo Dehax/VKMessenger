@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -34,8 +35,6 @@ namespace VKMessenger
 
             if (Authenticate())
             {
-                MessageBox.Show("Авторизация прошла успешно!", "Авторизовано");
-
                 MainWindow mainWindow = new MainWindow(_messenger);
                 MainWindow = mainWindow;
                 mainWindow.Show();
@@ -68,6 +67,8 @@ namespace VKMessenger
                 {
                     Settings.Default.AccessToken = accessToken;
                     Settings.Default.Save();
+
+                    MessageBox.Show("Авторизация прошла успешно!", "Авторизовано");
                 }
                 else
                 {
@@ -85,7 +86,7 @@ namespace VKMessenger
 
         private void ProcessUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            string localAppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create);
+            string localAppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.Create);
 
             StringBuilder sb = new StringBuilder(localAppDataPath);
             sb.Append(Path.DirectorySeparatorChar);

@@ -16,26 +16,79 @@ namespace VKMessenger.Model
         {
             get { return _message; }
         }
-        
+
         public Dialog Dialog { get; set; }
 
         public User Author { get; set; }
 
         public string TimePrint
         {
-            get { return _message.Date?.ToString("HH:mm:ss dd.MM.yyyy"); }
+            get { return _message.Date?.ToString("dd.MM.yyyy HH:mm:ss"); }
         }
 
         public string Title
         {
-            get { return _message.Title; }
+            get
+            {
+                if (Dialog.IsChat)
+                {
+                    string title = Dialog.Title;
+
+                    foreach (User user in Dialog.Users)
+                    {
+                        if (Content.FromId == user.Id)
+                        {
+                            title = $"{user.FirstName} {user.LastName}";
+                            break;
+                        }
+                    }
+
+                    return title;
+                }
+                else
+                {
+                    if (Content.FromId == Dialog.User.Id)
+                    {
+                        return $"{Dialog.User.FirstName} {Dialog.User.LastName}";
+                    }
+                    else
+                    {
+                        return $"{Messenger.User.FirstName} {Messenger.User.LastName}";
+                    }
+                }
+            }
         }
 
         public string Image
         {
             get
             {
-                return Author?.Photo50.AbsoluteUri;
+                if (Dialog.IsChat)
+                {
+                    string image = Dialog.Photo;
+
+                    foreach (User user in Dialog.Users)
+                    {
+                        if (Content.FromId == user.Id)
+                        {
+                            image = user.Photo50.AbsoluteUri;
+                            break;
+                        }
+                    }
+
+                    return image;
+                }
+                else
+                {
+                    if (Content.FromId == Dialog.User.Id)
+                    {
+                        return Dialog.User.Photo50.AbsoluteUri;
+                    }
+                    else
+                    {
+                        return Messenger.User.Photo50.AbsoluteUri;
+                    }
+                }
             }
         }
 
@@ -46,12 +99,15 @@ namespace VKMessenger.Model
             _message = new Message();
         }
 
+        public VkMessage(Message message)
+        {
+            _message = message;
+        }
+
         public VkMessage(Message message, Dialog dialog)
         {
             _message = message;
             Dialog = dialog;
-
-            //dialog.Messages.Content.Add(this);
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")

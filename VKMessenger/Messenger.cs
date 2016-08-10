@@ -33,6 +33,8 @@ namespace VKMessenger
         private VkApi _vk = new VkApi();
         public VkApi Vk { get { return _vk; } }
 
+        public static User User { get; set; }
+
         public event EventHandler<MessageEventArgs> NewMessage;
 
         private bool _cancelRequest = false;
@@ -45,13 +47,13 @@ namespace VKMessenger
         {
             Task<long> sendMessageTask = Task.Run(() =>
             {
-                Utils.Extensions.SleepIfTooManyRequests(Vk);
-
+                Utils.Extensions.BeginVkInvoke(Vk);
                 long id = Vk.Messages.Send(new MessagesSendParams()
                 {
                     PeerId = dialog.PeerId,
                     Message = message
                 });
+                Utils.Extensions.EndVkInvoke();
 
                 return id;
             });
@@ -71,7 +73,9 @@ namespace VKMessenger
 
         public bool Authorize(string accessToken)
         {
+            Utils.Extensions.BeginVkInvoke(Vk);
             Vk.Authorize(accessToken);
+            Utils.Extensions.EndVkInvoke();
 
             bool authorized = Vk.IsAuthorized;
 
@@ -123,38 +127,27 @@ namespace VKMessenger
                             switch (eventType)
                             {
                                 case 4:
-                                    int messageId = (int)eventArray[1];
-                                    int flags = (int)eventArray[2];
-
-                                    if ((flags & 2) == 0)
                                     {
-                                        long fromId = (long)eventArray[3];
-                                        long timestamp = (long)eventArray[4];
-                                        string subject = (string)eventArray[5];
-                                        string text = (string)eventArray[6];
+                                        ulong messageId = (ulong)eventArray[1];
+                                        ulong flags = (ulong)eventArray[2];
 
-                                        VkMessage message = new VkMessage();
-                                        message.Content.Id = messageId;
-                                        message.Content.FromId = fromId;
-
-                                        if (fromId >= 2000000000)
+                                        VkMessage message = await Task.Run(() =>
                                         {
-                                            message.Content.ChatId = fromId - 2000000000;
-                                        }
-                                        else
+                                            VkMessage result = new VkMessage(Vk.Messages.GetById(messageId));
+
+                                            return result;
+                                        });
+
+                                        message.Content.FromId = ((flags & 2) == 0) ? message.Content.UserId : Vk.UserId;
+
+                                        message.Author = await Task.Run(() =>
                                         {
-                                            message.Author = await Task.Run(() =>
-                                            {
-                                                Utils.Extensions.SleepIfTooManyRequests(Vk);
+                                            Utils.Extensions.BeginVkInvoke(Vk);
+                                            User user = Vk.Users.Get(message.Content.FromId.Value);
+                                            Utils.Extensions.EndVkInvoke();
 
-                                                return Vk.Users.Get(fromId);
-                                            });
-                                        }
-
-                                        message.Content.Date = new DateTime(1970, 1, 1, 0, 0, 0, 0).AddSeconds(timestamp);
-                                        message.Content.Title = subject;
-                                        message.Content.Body = text;
-                                        message.Content.UserId = fromId;
+                                            return user;
+                                        });
 
                                         OnNewMessage(message);
                                     }
@@ -172,12 +165,16 @@ namespace VKMessenger
 
         private async void LoadUserIdAsync()
         {
-            Vk.UserId = await Task.Run(() =>
+            User = await Task.Run(() =>
             {
-                Utils.Extensions.SleepIfTooManyRequests(Vk);
+                Utils.Extensions.BeginVkInvoke(Vk);
+                User user = Vk.Users.Get(new long[] { }, ProfileFields.FirstName | ProfileFields.LastName | ProfileFields.Photo50)[0];
+                Utils.Extensions.EndVkInvoke();
 
-                return Vk.Users.Get(new long[] { })[0].Id;
+                return user;
             });
+
+            Vk.UserId = User.Id;
         }
     }
 }
