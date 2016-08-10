@@ -11,6 +11,14 @@ namespace VKMessenger.Utils
 {
     public static class Extensions
     {
+        private static DateTime _lastVkInvokeTime;
+        private static readonly object _syncRoot = new object();
+
+        static Extensions()
+        {
+            _lastVkInvokeTime = DateTime.Now;
+        }
+
         public static async Task<HttpWebResponse> GetResponseAsync(this HttpWebRequest request, CancellationToken ct)
         {
             using (ct.Register(() => request.Abort(), false))
@@ -31,14 +39,27 @@ namespace VKMessenger.Utils
                 }
             }
         }
-
-        public static void SleepIfTooManyRequests(VkApi vk)
+        
+        public static void BeginVkInvoke(VkApi vk)
         {
-            int delay = 1000 / vk.RequestsPerSecond + 1;
-            int timespan = vk.LastInvokeTimeSpan.HasValue ? (int)vk.LastInvokeTimeSpan.Value.TotalMilliseconds + 1 : 0;
-            if (timespan < delay)
+            lock (_syncRoot)
             {
-                Thread.Sleep(delay - timespan);
+                TimeSpan lastDelay = DateTime.Now - _lastVkInvokeTime;
+
+                int delay = 1000 / vk.RequestsPerSecond + 1;
+                int timespan = (int)lastDelay.TotalMilliseconds - 1;
+                if (timespan < delay)
+                {
+                    Thread.Sleep(delay - timespan);
+                }
+            }
+        }
+
+        public static void EndVkInvoke()
+        {
+            lock (_syncRoot)
+            {
+                _lastVkInvokeTime = DateTime.Now;
             }
         }
     }

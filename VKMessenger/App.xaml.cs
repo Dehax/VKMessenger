@@ -4,12 +4,14 @@ using System.Configuration;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
+using VKMessenger.Properties;
 using VKMessenger.View;
 using VKMessenger.ViewModel;
 
@@ -24,21 +26,57 @@ namespace VKMessenger
         public App()
         {
             ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            Startup += App_Startup;
             DispatcherUnhandledException += ProcessUnhandledException;
         }
 
-        private void App_Startup(object sender, StartupEventArgs e)
+        protected override void OnStartup(StartupEventArgs e)
         {
-            if (_messenger.Authenticate())
-            {
-                MessageBox.Show("Авторизация прошла успешно!", "Авторизовано");
+            base.OnStartup(e);
 
+            if (Authenticate())
+            {
                 MainWindow mainWindow = new MainWindow(_messenger);
                 MainWindow = mainWindow;
                 mainWindow.Show();
                 mainWindow.Closed += MainWindow_Closed;
             }
+            else
+            {
+                Shutdown();
+            }
+        }
+
+        public bool Authenticate()
+        {
+            string accessToken = Settings.Default.AccessToken;
+
+            if (!string.IsNullOrWhiteSpace(accessToken))
+            {
+                if (!_messenger.Authorize(accessToken))
+                {
+                    throw new Exception("Неправильный маркер доступа!");
+                }
+            }
+            else
+            {
+                AuthorizationWindow authWindow = new AuthorizationWindow();
+                authWindow.ShowDialog();
+                accessToken = authWindow.AccessToken;
+
+                if (_messenger.Authorize(accessToken))
+                {
+                    Settings.Default.AccessToken = accessToken;
+                    Settings.Default.Save();
+
+                    MessageBox.Show("Авторизация прошла успешно!", "Авторизовано");
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         private void MainWindow_Closed(object sender, EventArgs e)
@@ -48,7 +86,7 @@ namespace VKMessenger
 
         private void ProcessUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            string localAppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.Create);
+            string localAppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.Create);
 
             StringBuilder sb = new StringBuilder(localAppDataPath);
             sb.Append(Path.DirectorySeparatorChar);

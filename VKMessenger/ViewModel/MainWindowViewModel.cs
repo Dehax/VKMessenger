@@ -73,19 +73,14 @@ namespace VKMessenger.ViewModel
             }
         }
 
-        private Dispatcher _dispatcher;
-        public Dispatcher Dispatcher { get { return _dispatcher; } }
-
         public SendMessageCommand SendMessageCommand { get; set; }
 
         public event EventHandler<NewMessageEventArgs> NewMessage;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public MainWindowViewModel(Messenger messenger, Dispatcher dispatcher)
+        public MainWindowViewModel(Messenger messenger)
         {
-            _dispatcher = dispatcher;
-
             _messenger = messenger;
             _messenger.NewMessage += ReceiveNewMessage;
             _messenger.Start();
@@ -98,32 +93,38 @@ namespace VKMessenger.ViewModel
 
         private void ReceiveNewMessage(object sender, MessageEventArgs e)
         {
-            Message message = e.Message;
+            VkMessage message = e.Message;
             Dialog currentDialog = DialogsViewModel.SelectedDialog;
 
             if (currentDialog != null
-                && ((currentDialog.IsChat && currentDialog.Chat.Id == message.ChatId)
-                || (!currentDialog.IsChat && currentDialog.User.Id == message.UserId.Value)))
+                && ((currentDialog.IsChat && currentDialog.Chat.Id == message.Content.ChatId)
+                || (!currentDialog.IsChat && currentDialog.User.Id == message.Content.UserId.Value)))
             {
-                Dispatcher.Invoke(() =>
+                message.Dialog = currentDialog;
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    currentDialog.Messages.Content.Add(new VkMessage(message, currentDialog));
+                    currentDialog.Messages.Content.Add(message);
                 });
             }
 
-            Dialog dialogForMessage = null;
+            Dialog dialogForMessage = currentDialog;
 
-            foreach (Dialog dialog in DialogsViewModel.Model.Content)
+            if (dialogForMessage == null)
             {
-                if ((dialog.IsChat && dialog.Chat.Id == message.ChatId)
-                    || (!dialog.IsChat && dialog.User.Id == message.UserId.Value))
+                foreach (Dialog dialog in DialogsViewModel.Model.Content)
                 {
-                    dialogForMessage = dialog;
-                    break;
+                    if ((dialog.IsChat && dialog.Chat.Id == message.Content.ChatId)
+                        || (!dialog.IsChat && dialog.User.Id == message.Content.UserId.Value))
+                    {
+                        dialogForMessage = dialog;
+                        message.Dialog = dialogForMessage;
+                        break;
+                    }
                 }
             }
 
-            OnNewMessage(dialogForMessage, new VkMessage(message, dialogForMessage));
+            OnNewMessage(dialogForMessage, message);
         }
 
         private void DialogsViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -131,10 +132,10 @@ namespace VKMessenger.ViewModel
             switch (e.PropertyName)
             {
                 case nameof(DialogsViewModel.SelectedDialogIndex):
+                    MessagesViewModel.Dialog = DialogsViewModel.SelectedDialog;
+                    SendMessageCommand.RaiseCanExecuteChanged();
                     break;
             }
-
-            MessagesViewModel.Dialog = DialogsViewModel.SelectedDialog;
         }
 
         protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
@@ -152,15 +153,6 @@ namespace VKMessenger.ViewModel
             try
             {
                 long sentMessageId = await _messenger.SendMessage(MessageText, DialogsViewModel.SelectedDialog);
-
-                Task<Message> getMessageTask = Task.Run(() =>
-                {
-                    Utils.Extensions.SleepIfTooManyRequests(Vk);
-                    return Vk.Messages.GetById((ulong)sentMessageId);
-                });
-
-                Message messageObject = await getMessageTask;
-                MessagesViewModel.Model.Content.Add(new VkMessage(messageObject, DialogsViewModel.SelectedDialog));
                 MessageText = string.Empty;
             }
             catch (Exception)
@@ -170,7 +162,7 @@ namespace VKMessenger.ViewModel
 
         private bool CanSendMessage()
         {
-            return !string.IsNullOrWhiteSpace(MessageText);
+            return !string.IsNullOrWhiteSpace(MessageText) && DialogsViewModel.SelectedDialog != null;
         }
     }
 }

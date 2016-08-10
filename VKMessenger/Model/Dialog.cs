@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -78,6 +79,20 @@ namespace VKMessenger.Model
                 if (_user != value)
                 {
                     _user = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
+
+        private List<User> _users;
+        public List<User> Users
+        {
+            get { return _users; }
+            set
+            {
+                if (_users != value)
+                {
+                    _users = value;
                     OnPropertyChanged();
                 }
             }

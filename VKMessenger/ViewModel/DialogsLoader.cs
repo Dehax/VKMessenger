@@ -67,6 +67,12 @@ namespace VKMessenger.ViewModel
             for (int i = 0; i < dialogMessages.Count; i++)
             {
                 Message lastMessage = dialogMessages[i];
+
+                if (lastMessage.UserId < 0)
+                {
+                    continue;
+                }
+
                 Dialog dialog = new Dialog();
                 VkMessage message = new VkMessage(lastMessage, dialog);
 
@@ -74,6 +80,7 @@ namespace VKMessenger.ViewModel
                 {
                     dialog.Photo = lastMessage.Photo50;
                     dialog.Chat = await LoadChat(lastMessage.ChatId.Value);
+                    dialog.Users = await LoadUsers(dialog.Chat.Users);
                 }
                 else
                 {
@@ -85,13 +92,31 @@ namespace VKMessenger.ViewModel
             }
         }
 
+        private Task<List<User>> LoadUsers(Collection<long> usersIds)
+        {
+            return Task.Run(() =>
+            {
+                List<User> users = new List<User>(usersIds.Count);
+
+                Utils.Extensions.BeginVkInvoke(Vk);
+                ReadOnlyCollection<User> usersCollection = Vk.Users.Get(usersIds, ProfileFields.FirstName | ProfileFields.LastName | ProfileFields.Photo50);
+                Utils.Extensions.EndVkInvoke();
+
+                users.AddRange(usersCollection);
+
+                return users;
+            });
+        }
+
         private Task<User> LoadUser(long userId)
         {
             return Task.Run(() =>
             {
-                Utils.Extensions.SleepIfTooManyRequests(Vk);
+                Utils.Extensions.BeginVkInvoke(Vk);
+                User user = Vk.Users.Get(userId, ProfileFields.FirstName | ProfileFields.LastName | ProfileFields.Photo50);
+                Utils.Extensions.EndVkInvoke();
 
-                return Vk.Users.Get(userId, ProfileFields.FirstName | ProfileFields.LastName | ProfileFields.Photo50);
+                return user;
             });
         }
 
@@ -99,9 +124,11 @@ namespace VKMessenger.ViewModel
         {
             return Task.Run(() =>
             {
-                Utils.Extensions.SleepIfTooManyRequests(Vk);
+                Utils.Extensions.BeginVkInvoke(Vk);
+                Chat chat = Vk.Messages.GetChat(chatId);
+                Utils.Extensions.EndVkInvoke();
 
-                return Vk.Messages.GetChat(chatId);
+                return chat;
             });
         }
 
@@ -109,14 +136,38 @@ namespace VKMessenger.ViewModel
         {
             return Task.Run(() =>
             {
-                Utils.Extensions.SleepIfTooManyRequests(Vk);
+                List<Message> messages = new List<Message>();
+                int offset = 0;
 
+                Utils.Extensions.BeginVkInvoke(Vk);
                 MessagesGetObject response = Vk.Messages.GetDialogs(new MessagesDialogsGetParams()
                 {
-                    Count = 10
+                    PreviewLength = 1,
+                    Count = 20
                 });
+                Utils.Extensions.EndVkInvoke();
 
-                return response.Messages;
+                offset += response.Messages.Count;
+
+                messages.AddRange(response.Messages);
+
+                while (offset + response.Messages.Count < response.TotalCount)
+                {
+                    Utils.Extensions.BeginVkInvoke(Vk);
+                    response = Vk.Messages.GetDialogs(new MessagesDialogsGetParams()
+                    {
+                        Offset = offset,
+                        PreviewLength = 1,
+                        Count = 20
+                    });
+                    Utils.Extensions.EndVkInvoke();
+
+                    offset += response.Messages.Count;
+
+                    messages.AddRange(response.Messages);
+                }
+
+                return new ReadOnlyCollection<Message>(messages);
             });
         }
 
