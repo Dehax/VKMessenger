@@ -1,4 +1,6 @@
 version: 0.2.1.{build}
+environment:
+  EnableNuGetPackageRestore: true
 build:
   project: VKMessenger.sln
   verbosity: minimal
