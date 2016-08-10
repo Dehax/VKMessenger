@@ -1,0 +1,4 @@
+version: 0.2.1.{build}
+build:
+  project: VKMessenger.sln
+  verbosity: minimal
