@@ -1,6 +1,0 @@
-version: 0.2.1.{build}
-before_build:
-- cmd: nuget restore
-build:
-  project: VKMessenger.sln
-  verbosity: minimal
