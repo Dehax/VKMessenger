@@ -1,16 +1,11 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows;
 using VKMessenger.Model;
-using VKMessenger.View;
 using VkNet;
 using VkNet.Enums.Filters;
 using VkNet.Model;
@@ -18,7 +13,7 @@ using VkNet.Model.RequestParams;
 
 namespace VKMessenger
 {
-    public class MessageEventArgs : EventArgs
+	public class MessageEventArgs : EventArgs
     {
         public VkMessage Message { get; set; }
 

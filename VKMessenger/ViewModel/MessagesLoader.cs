@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 using VKMessenger.Model;
 using VkNet;
@@ -13,10 +9,22 @@ using VkNet.Model.RequestParams;
 
 namespace VKMessenger.ViewModel
 {
-    public class MessagesLoader : INotifyPropertyChanged
+	public class MessagesLoader : INotifyPropertyChanged
     {
         private Messenger _messenger;
-        public VkApi Vk { get { return _messenger.Vk; } }
+		public Messenger Messenger
+		{
+			get { return _messenger; }
+			set
+			{
+				if (_messenger != value)
+				{
+					_messenger = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+		public VkApi Vk { get { return _messenger.Vk; } }
 
         private Messages _model = new Messages();
         public Messages Model
@@ -49,9 +57,9 @@ namespace VKMessenger.ViewModel
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public MessagesLoader(Messenger messenger)
+        public MessagesLoader(/*Messenger messenger*/)
         {
-            _messenger = messenger;
+            /*_messenger = messenger;*/
         }
 
         protected virtual async void OnDialogChanged()

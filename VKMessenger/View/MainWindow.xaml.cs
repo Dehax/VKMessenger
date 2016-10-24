@@ -1,39 +1,18 @@
 ﻿using Hardcodet.Wpf.TaskbarNotification;
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using VKMessenger.Model;
 using VKMessenger.ViewModel;
-using VkNet.Model;
 
 namespace VKMessenger.View
 {
-    public partial class MainWindow : Window
+	public partial class MainWindow : Window
     {
-        private Messenger _messenger;
-        private MainWindowViewModel _viewModel;
+        private MainWindowViewModel _viewModel = new MainWindowViewModel();
 
-        public MainWindow(Messenger messenger)
+		public MainWindow()
         {
-            _messenger = messenger;
-
             InitializeComponent();
-
-            _viewModel = new MainWindowViewModel(_messenger);
+			
             DataContext = _viewModel;
             dialogsListBox.DataContext = _viewModel.DialogsViewModel;
             dialogsListBox.ItemsSource = _viewModel.DialogsViewModel.Model.Content;

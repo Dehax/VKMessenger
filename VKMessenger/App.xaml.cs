@@ -1,15 +1,9 @@
 ﻿using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.IO.IsolatedStorage;
-using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using VKMessenger.Properties;
@@ -36,7 +30,17 @@ namespace VKMessenger
 
 			if (Authenticate())
 			{
-				MainWindow mainWindow = new MainWindow(_messenger);
+				MainWindow mainWindow = new MainWindow(/*_messenger*/);
+				MainWindowViewModel vm = mainWindow.DataContext as MainWindowViewModel;
+
+				if (vm == null)
+				{
+					throw new ArgumentNullException(nameof(vm), "MainWindow.DataContext is not MainWindowViewModel!");
+				}
+
+				vm.Messenger = _messenger;
+				vm.Messenger.Start();
+
 				MainWindow = mainWindow;
 				mainWindow.Show();
 				mainWindow.Closed += MainWindow_Closed;

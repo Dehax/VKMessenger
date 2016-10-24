@@ -1,19 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Threading;
 using VKMessenger.Model;
 using VKMessenger.ViewModel.Commands;
 using VkNet;
-using VkNet.Model;
 
 namespace VKMessenger.ViewModel
 {
-    public class NewMessageEventArgs : EventArgs
+	public class NewMessageEventArgs : EventArgs
     {
         public Dialog Dialog { get; set; }
         public VkMessage Message { get; set; }
@@ -28,9 +22,25 @@ namespace VKMessenger.ViewModel
     public class MainWindowViewModel : INotifyPropertyChanged
     {
         private Messenger _messenger;
-        public VkApi Vk { get { return _messenger.Vk; } }
+		public Messenger Messenger
+		{
+			get { return _messenger; }
+			set
+			{
+				if (_messenger != value)
+				{
+					_messenger = value;
+					_messenger.NewMessage += ReceiveNewMessage;
+					DialogsViewModel.Messenger = _messenger;
+					MessagesViewModel.Messenger = _messenger;
+					DialogsViewModel.LoadDialogs();
+					OnPropertyChanged();
+				}
+			}
+		}
+		public VkApi Vk { get { return _messenger.Vk; } }
 
-        private DialogsLoader _dialogsViewModel;
+        private DialogsLoader _dialogsViewModel = new DialogsLoader();
         public DialogsLoader DialogsViewModel
         {
             get { return _dialogsViewModel; }
@@ -44,7 +54,7 @@ namespace VKMessenger.ViewModel
             }
         }
 
-        private MessagesLoader _messagesViewModel;
+        private MessagesLoader _messagesViewModel = new MessagesLoader();
         public MessagesLoader MessagesViewModel
         {
             get { return _messagesViewModel; }
@@ -79,15 +89,9 @@ namespace VKMessenger.ViewModel
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public MainWindowViewModel(Messenger messenger)
+        public MainWindowViewModel()
         {
-            _messenger = messenger;
-            _messenger.NewMessage += ReceiveNewMessage;
-            _messenger.Start();
-
-            DialogsViewModel = new DialogsLoader(_messenger);
             DialogsViewModel.PropertyChanged += DialogsViewModel_PropertyChanged;
-            MessagesViewModel = new MessagesLoader(_messenger);
             SendMessageCommand = new SendMessageCommand(SendMessageExecute, CanSendMessage);
         }
 

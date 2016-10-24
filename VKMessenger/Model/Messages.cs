@@ -1,17 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
-using VkNet;
 using VkNet.Model;
 
 namespace VKMessenger.Model
 {
-    public class Messages : INotifyPropertyChanged
+	public class Messages : INotifyPropertyChanged
     {
         private ObservableCollection<VkMessage> _messages = new ObservableCollection<VkMessage>();
         public ObservableCollection<VkMessage> Content

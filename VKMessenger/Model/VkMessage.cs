@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using VkNet.Model;
 
 namespace VKMessenger.Model
 {
-    public class VkMessage : INotifyPropertyChanged
+	public class VkMessage : INotifyPropertyChanged
     {
         private Message _message;
         public Message Content

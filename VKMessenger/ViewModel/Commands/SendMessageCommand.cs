@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace VKMessenger.ViewModel.Commands
 {
-    public class SendMessageCommand : ICommand
+	public class SendMessageCommand : ICommand
     {
         private Action _targetExecuteAction;
         private Func<bool> _targetCanExecuteMethod;

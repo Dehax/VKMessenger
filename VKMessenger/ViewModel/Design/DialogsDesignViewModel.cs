@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using VKMessenger.Model;
+﻿using VKMessenger.Model;
 
 namespace VKMessenger.ViewModel.Design
 {
-    public class DialogsDesignViewModel
+	public class DialogsDesignViewModel
     {
         public Dialogs Model { get; set; } = new Dialogs(new Dialog[]
         {

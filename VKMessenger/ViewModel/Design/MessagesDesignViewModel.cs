@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using VKMessenger.Model;
 using VkNet.Model;
 
 namespace VKMessenger.ViewModel.Design
 {
-    public class MessagesDesignViewModel
+	public class MessagesDesignViewModel
     {
         private ObservableCollection<VkMessage> _messages = new ObservableCollection<VkMessage>()
         {
