@@ -111,24 +111,21 @@ namespace VKMessenger.ViewModel
                     currentDialog.Messages.Content.Add(message);
                 });
             }
-
+			
             Dialog dialogForMessage = currentDialog;
 
-            if (dialogForMessage == null)
-            {
-                foreach (Dialog dialog in DialogsViewModel.Model.Content)
-                {
-                    if ((dialog.IsChat && dialog.Chat.Id == message.Content.ChatId)
-                        || (!dialog.IsChat && dialog.User.Id == message.Content.UserId.Value))
-                    {
-                        dialogForMessage = dialog;
-                        message.Dialog = dialogForMessage;
-                        break;
-                    }
-                }
-            }
+			foreach (Dialog dialog in DialogsViewModel.Model.Content)
+			{
+				if ((dialog.IsChat && dialog.Chat.Id == message.Content.ChatId)
+					|| (!dialog.IsChat && dialog.User.Id == message.Content.UserId.Value))
+				{
+					dialogForMessage = dialog;
+					message.Dialog = dialogForMessage;
+					break;
+				}
+			}
 
-            OnNewMessage(dialogForMessage, message);
+			OnNewMessage(dialogForMessage, message);
         }
 
         private void DialogsViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
