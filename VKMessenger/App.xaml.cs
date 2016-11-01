@@ -1,14 +1,19 @@
-﻿using Microsoft.Win32;
+﻿using Hardcodet.Wpf.TaskbarNotification;
+using Microsoft.Win32;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using VKMessenger.Properties;
 using VKMessenger.View;
 using VKMessenger.ViewModel;
+using VKMessenger.ViewModel.Commands;
 
 namespace VKMessenger
 {
@@ -16,34 +21,40 @@ namespace VKMessenger
 	{
 		private const string LOG_FILE_NAME = @"VKMessenger.log";
 
+		private bool _relogining = false;
+
 		private Messenger _messenger = new Messenger();
+
+		private TaskbarIcon _taskbarIcon;
+
+		public SimpleCommand ReloginCommand { get; set; }
 
 		public App()
 		{
 			ShutdownMode = ShutdownMode.OnExplicitShutdown;
 			DispatcherUnhandledException += ProcessUnhandledException;
+
+			ReloginCommand = new SimpleCommand(() => { Relogin(); }, () => { return true; });
 		}
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			base.OnStartup(e);
 
+			_taskbarIcon = new TaskbarIcon();
+			_taskbarIcon.ToolTip = nameof(VKMessenger);
+			_taskbarIcon.IconSource = new BitmapImage(new Uri(@"pack://application:,,,/VKMessenger;component/Images/Icons/VKMessenger.ico"));
+			_taskbarIcon.TrayMouseDoubleClick += taskbarIcon_TrayMouseDoubleClick;
+			_taskbarIcon.ContextMenu = new ContextMenu();
+			MenuItem reloginMenuItem = new MenuItem();
+			reloginMenuItem.Command = ReloginCommand;
+			//reloginMenuItem.CommandBindings.Add(new CommandBinding(ReloginCommand));
+			reloginMenuItem.Header = "Сменить пользователя";
+			_taskbarIcon.ContextMenu.Items.Add(reloginMenuItem);
+
 			if (Authenticate())
 			{
-				MainWindow mainWindow = new MainWindow(/*_messenger*/);
-				MainWindowViewModel vm = mainWindow.DataContext as MainWindowViewModel;
-
-				if (vm == null)
-				{
-					throw new ArgumentNullException(nameof(vm), "MainWindow.DataContext is not MainWindowViewModel!");
-				}
-
-				vm.Messenger = _messenger;
-				vm.Messenger.Start();
-
-				MainWindow = mainWindow;
-				mainWindow.Show();
-				mainWindow.Closed += MainWindow_Closed;
+				ShowMainWindow();
 			}
 			else
 			{
@@ -51,11 +62,72 @@ namespace VKMessenger
 			}
 		}
 
-		public bool Authenticate()
+		private void taskbarIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)
+		{
+			((MainWindow)MainWindow).UnTrayWindow();
+		}
+
+		protected override void OnExit(ExitEventArgs e)
+		{
+			_taskbarIcon.Dispose();
+
+			base.OnExit(e);
+		}
+
+		private void ShowMainWindow()
+		{
+			MainWindow mainWindow = new MainWindow();
+			MainWindowViewModel vm = mainWindow.DataContext as MainWindowViewModel;
+
+			if (vm == null)
+			{
+				throw new ArgumentNullException(nameof(vm), "MainWindow.DataContext is not MainWindowViewModel!");
+			}
+
+			vm.Messenger = _messenger;
+			vm.Messenger.Start();
+			//vm.Relogin += Relogin;
+			vm.NewMessage += NewMessage;
+
+			MainWindow = mainWindow;
+			mainWindow.Show();
+			mainWindow.Closed += MainWindow_Closed;
+		}
+
+		private void NewMessage(object sender, NewMessageEventArgs e)
+		{
+			if (e.Message.Content.FromId != Messenger.User.Id)
+			{
+				string title = e.Dialog != null ? e.Dialog.Title : "Новый диалог";
+				string message = e.Message.Content.Body;
+
+				Dispatcher.Invoke(() =>
+				{
+					_taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
+				});
+			}
+		}
+
+		private async void Relogin()
+		{
+			_messenger.Stop();
+
+			_relogining = true;
+
+			MainWindow.Close();
+
+			await Current.Dispatcher.InvokeAsync(() => { Authenticate(true); });
+
+			_relogining = false;
+
+			ShowMainWindow();
+		}
+
+		private bool Authenticate(bool relogin = false)
 		{
 			string accessToken = Settings.Default.AccessToken;
 
-			if (!string.IsNullOrWhiteSpace(accessToken))
+			if (!relogin && !string.IsNullOrWhiteSpace(accessToken))
 			{
 				if (!_messenger.Authorize(accessToken))
 				{
@@ -130,7 +202,10 @@ namespace VKMessenger
 
 		private void MainWindow_Closed(object sender, EventArgs e)
 		{
-			Shutdown();
+			if (!_relogining)
+			{
+				Shutdown();
+			}
 		}
 
 		private void ProcessUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)

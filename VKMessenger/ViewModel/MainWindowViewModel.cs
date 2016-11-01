@@ -19,7 +19,7 @@ namespace VKMessenger.ViewModel
         }
     }
 
-    public class MainWindowViewModel : INotifyPropertyChanged
+	public class MainWindowViewModel : INotifyPropertyChanged
     {
         private Messenger _messenger;
 		public Messenger Messenger
@@ -83,16 +83,20 @@ namespace VKMessenger.ViewModel
             }
         }
 
-        public SendMessageCommand SendMessageCommand { get; set; }
+        public SimpleCommand SendMessageCommand { get; set; }
+		//public SimpleCommand ReloginCommand { get; set; }
 
-        public event EventHandler<NewMessageEventArgs> NewMessage;
+		public event EventHandler<NewMessageEventArgs> NewMessage;
+
+		//public event EventHandler Relogin;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
         public MainWindowViewModel()
         {
             DialogsViewModel.PropertyChanged += DialogsViewModel_PropertyChanged;
-            SendMessageCommand = new SendMessageCommand(SendMessageExecute, CanSendMessage);
+            SendMessageCommand = new SimpleCommand(SendMessageExecute, CanSendMessage);
+			//ReloginCommand = new SimpleCommand(ReloginExecute, () => { return true; });
         }
 
         private void ReceiveNewMessage(object sender, MessageEventArgs e)
@@ -149,17 +153,29 @@ namespace VKMessenger.ViewModel
             NewMessage?.Invoke(this, new NewMessageEventArgs(dialog, message));
         }
 
+		//protected virtual void OnRelogin()
+		//{
+		//	Messenger.Stop();
+
+		//	Relogin?.Invoke(this, EventArgs.Empty);
+		//}
+
         private async void SendMessageExecute()
         {
             try
             {
-                long sentMessageId = await _messenger.SendMessage(MessageText, DialogsViewModel.SelectedDialog);
+                /*long sentMessageId = */await _messenger.SendMessage(MessageText, DialogsViewModel.SelectedDialog);
                 MessageText = string.Empty;
             }
             catch (Exception)
             {
             }
         }
+
+		//private void ReloginExecute()
+		//{
+		//	OnRelogin();
+		//}
 
         private bool CanSendMessage()
         {

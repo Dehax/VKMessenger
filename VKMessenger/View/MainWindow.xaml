@@ -22,7 +22,13 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <tb:TaskbarIcon x:Name="notifyIcon" ToolTipText="VK Messenger" IconSource="/VKMessenger;component/Images/Icons/VKMessenger.ico" />
+        <!--<tb:TaskbarIcon x:Name="notifyIcon" ToolTipText="VK Messenger" IconSource="/VKMessenger;component/Images/Icons/VKMessenger.ico">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Command="{Binding ReloginCommand}" Header="Сменить пользователя" />
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>-->
 
         <ListBox Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Name="dialogsListBox" Margin="5"  d:DataContext="{d:DesignInstance Type=designvm:DialogsDesignViewModel, IsDesignTimeCreatable=True}" ItemsSource="{Binding Path=Model.Content}" SelectedIndex="{Binding SelectedDialogIndex}" HorizontalContentAlignment="Stretch">
             <ListBox.ItemTemplate>

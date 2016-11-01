@@ -22,22 +22,10 @@ namespace VKMessenger.View
             _viewModel.NewMessage += ReceiveNewMessage;
             
             StateChanged += MainWindow_StateChanged;
-            notifyIcon.TrayMouseDoubleClick += NotifyIcon_TrayMouseDoubleClick;
         }
 
-        private void ReceiveNewMessage(object sender, NewMessageEventArgs e)
+		private void ReceiveNewMessage(object sender, NewMessageEventArgs e)
         {
-            if (e.Message.Content.FromId != Messenger.User.Id)
-            {
-                string title = e.Dialog != null ? e.Dialog.Title : "Новый диалог";
-                string message = e.Message.Content.Body;
-
-                Dispatcher.Invoke(() =>
-                {
-                    notifyIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
-                });
-            }
-
             if (e.Dialog == _viewModel.DialogsViewModel.SelectedDialog)
             {
                 Dispatcher.Invoke(() =>
@@ -47,7 +35,7 @@ namespace VKMessenger.View
             }
         }
 
-        private void NotifyIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)
+        public void UnTrayWindow()
         {
             Show();
             WindowState = WindowState.Normal;

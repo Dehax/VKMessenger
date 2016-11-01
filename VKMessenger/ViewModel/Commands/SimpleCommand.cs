@@ -3,17 +3,17 @@ using System.Windows.Input;
 
 namespace VKMessenger.ViewModel.Commands
 {
-	public class SendMessageCommand : ICommand
+	public class SimpleCommand : ICommand
     {
         private Action _targetExecuteAction;
         private Func<bool> _targetCanExecuteMethod;
 
-        public SendMessageCommand(Action executeAction)
+        public SimpleCommand(Action executeAction)
         {
             _targetExecuteAction = executeAction;
         }
 
-        public SendMessageCommand(Action executeAction, Func<bool> canExecuteMethod)
+        public SimpleCommand(Action executeAction, Func<bool> canExecuteMethod)
         {
             _targetExecuteAction = executeAction;
             _targetCanExecuteMethod = canExecuteMethod;

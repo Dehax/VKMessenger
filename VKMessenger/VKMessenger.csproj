@@ -99,7 +99,15 @@
     <Compile Include="Model\Dialogs.cs" />
     <Compile Include="Model\Messages.cs" />
     <Compile Include="Model\VkMessage.cs" />
-    <Compile Include="ViewModel\Commands\SendMessageCommand.cs" />
+    <Compile Include="Protocol\DVProto.cs" />
+    <Compile Include="Protocol\IEndToEndProtocol.cs" />
+    <Compile Include="Protocol\Messages\FileMessage.cs" />
+    <Compile Include="Protocol\Messages\RequestKeyMessage.cs" />
+    <Compile Include="Protocol\Messages\ResponseKeyMessage.cs" />
+    <Compile Include="Protocol\Messages\ServiceMessage.cs" />
+    <Compile Include="Protocol\Messages\TextUserMessage.cs" />
+    <Compile Include="Protocol\Messages\UserMessage.cs" />
+    <Compile Include="ViewModel\Commands\SimpleCommand.cs" />
     <Compile Include="ViewModel\Design\DialogsDesignViewModel.cs" />
     <Compile Include="ViewModel\Design\MessagesDesignViewModel.cs" />
     <Compile Include="ViewModel\DialogsLoader.cs" />
