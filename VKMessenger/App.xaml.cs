@@ -116,6 +116,8 @@ namespace VKMessenger
 
 			MainWindow.Close();
 
+			Settings.Default.AccessToken = string.Empty;
+
 			await Current.Dispatcher.InvokeAsync(() => { Authenticate(true); });
 
 			_relogining = false;
@@ -137,7 +139,7 @@ namespace VKMessenger
 			else
 			{
 				SetupWebBrowserEmulationVersion();
-				AuthorizationWindow authWindow = new AuthorizationWindow();
+				AuthorizationWindow authWindow = new AuthorizationWindow(relogin);
 				authWindow.ShowDialog();
 				accessToken = authWindow.AccessToken;
 

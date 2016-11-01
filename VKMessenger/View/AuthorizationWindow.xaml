@@ -5,6 +5,6 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VKMessenger.View"
         mc:Ignorable="d"
-        Title="Авторизация ВКонтакте" Width="672" Height="419" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Icon="/VKMessenger;component/Images/Icons/VKMessenger.ico" WindowStartupLocation="CenterScreen">
+        Title="Авторизация ВКонтакте" Width="750" Height="500" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Icon="/VKMessenger;component/Images/Icons/VKMessenger.ico" WindowStartupLocation="CenterScreen">
     <WebBrowser Name="browser" />
 </Window>

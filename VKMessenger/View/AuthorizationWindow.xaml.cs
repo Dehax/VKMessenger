@@ -16,11 +16,15 @@ namespace VKMessenger.View
         public string AccessToken { get; private set; }
         public long UserId { get; private set; }
 
-        public AuthorizationWindow()
+        public AuthorizationWindow(bool revoke = false)
         {
             InitializeComponent();
             
             string url = string.Format(AUTHORIZE_URL, APPLICATION_ID, REDIRECT_URI, Settings.Messages | Settings.Offline);
+			if (revoke)
+			{
+				url += "&revoke=1";
+			}
             browser.Source = new Uri(url);
             browser.LoadCompleted += browser_LoadCompleted;
         }
