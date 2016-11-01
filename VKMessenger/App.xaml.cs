@@ -139,7 +139,7 @@ namespace VKMessenger
 			else
 			{
 				SetupWebBrowserEmulationVersion();
-				AuthorizationWindow authWindow = new AuthorizationWindow(relogin);
+				AuthorizationWindow authWindow = new AuthorizationWindow(true);
 				authWindow.ShowDialog();
 				accessToken = authWindow.AccessToken;
 

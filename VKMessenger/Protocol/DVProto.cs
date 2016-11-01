@@ -34,22 +34,41 @@ namespace VKMessenger.Protocol
 			{
 				_handshakeEvents.Add(userId, new AutoResetEvent(false));
 
-				await Task.Run(() =>
-				{
-					RequestKeyMessage requestKeyMessage = new RequestKeyMessage();
-					Utils.Extensions.BeginVkInvoke(Vk);
-					Vk.Messages.Send(new MessagesSendParams()
-					{
-						PeerId = message.PeerId,
-						Message = requestKeyMessage.DataBase64
-					});
-					Utils.Extensions.EndVkInvoke();
-				});
+				await ApplyForPublicKeyAsync(message.PeerId.Value);
 
 				_handshakeEvents[userId].WaitOne();
 			}
 
-			await Task.Run(() =>
+			await EncryptAndSendMessageAsync(message, userId);
+		}
+
+		/// <summary>
+		/// Запросить публичный ключ для отправки зашифрованных сообщений.
+		/// </summary>
+		/// <param name="userId">ID пользователя, которому будет отправлен запрос</param>
+		private Task ApplyForPublicKeyAsync(long userId)
+		{
+			return Task.Run(() =>
+			{
+				RequestKeyMessage requestKeyMessage = new RequestKeyMessage();
+				Utils.Extensions.BeginVkInvoke(Vk);
+				Vk.Messages.Send(new MessagesSendParams()
+				{
+					PeerId = userId,
+					Message = requestKeyMessage.DataBase64
+				});
+				Utils.Extensions.EndVkInvoke();
+			});
+		}
+
+		/// <summary>
+		/// Подписать, зашифровать и отправить сообщение.
+		/// </summary>
+		/// <param name="message">Сообщение для отправки</param>
+		/// <param name="userId">ID пользователя-получателя сообщения</param>
+		private Task EncryptAndSendMessageAsync(MessagesSendParams message, long userId)
+		{
+			return Task.Run(() =>
 			{
 				TextUserMessage textUserMessage = new TextUserMessage(_rsaKeysTo[userId], message.Message);
 				textUserMessage.Encrypt();
@@ -124,7 +143,8 @@ namespace VKMessenger.Protocol
 					{
 					case UserMessageType.Text:
 						{
-							TextUserMessage textUserMessage = new TextUserMessage(message.Content.Body, _rsaKeysTo[message.Content.FromId.Value]);
+							TextUserMessage textUserMessage = new TextUserMessage(message.Content.Body, _rsaKeysFrom[message.Content.FromId.Value]);
+							result = message;
 							result.Content.Body = textUserMessage.Text;
 						}
 						break;

@@ -130,7 +130,7 @@ namespace VKMessenger
 			if (IsEncryptionEnabled)
 			{
 				VkMessage result;
-				if (_dvProto.TryParseMessage(message, out result))
+				if (message.Content.FromId.Value != Vk.UserId.Value && _dvProto.TryParseMessage(message, out result))
 				{
 					if (result != null)
 					{

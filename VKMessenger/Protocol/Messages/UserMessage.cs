@@ -161,7 +161,7 @@ namespace VKMessenger.Protocol.Messages
 
 			DSACryptoServiceProvider dsa = new DSACryptoServiceProvider();
 			dsa.ImportCspBlob(publicKey);
-			signatureValid = dsa.VerifyData(signedData, signature);
+			signatureValid = dsa.VerifyData(content, signature);
 			dsa.Dispose();
 
 			return signatureValid;
