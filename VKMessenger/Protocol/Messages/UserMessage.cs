@@ -31,20 +31,12 @@ namespace VKMessenger.Protocol.Messages
 			protected set { _userMessageType = value; }
 		}
 
-		//private byte[] _encryptedKey = new byte[ENCRYPTED_KEY_SIZE];
-		//public byte[] EncryptedKey
-		//{
-		//	get { return _encryptedKey; }
-		//}
-
 		private byte[] _userMessageData;
 		protected byte[] UserMessageData
 		{
 			get { return _userMessageData; }
 			set { _userMessageData = value; }
 		}
-
-		//private byte[] _encryptedSignedMessageData;
 
 		private RSACryptoServiceProvider _rsaPublicKey;
 		//protected RSACryptoServiceProvider RSAPublicKey
@@ -61,9 +53,6 @@ namespace VKMessenger.Protocol.Messages
 			: base()
 		{
 			Type = ServiceMessageType.UserMessage;
-			//byte[] oldData = Data;
-			//Data = new byte[oldData.Length + 1];
-			//Buffer.BlockCopy(oldData, 0, Data, 0, oldData.Length);
 			_rsaPublicKey = rsaPublicKey;
 		}
 
@@ -97,7 +86,6 @@ namespace VKMessenger.Protocol.Messages
 			}
 			
 			UserMessageData = content;
-			//Buffer.BlockCopy(Data, ENCRYPTED_KEY_SIZE + 2, _userMessageData, 0, messageLength);
 		}
 
 		/// <summary>
@@ -112,6 +100,7 @@ namespace VKMessenger.Protocol.Messages
 			RandomNumberGenerator.Create().GetBytes(key);
 			// Зашифровать данные ключом
 			byte[] encryptedData = EncryptData(signedData, key);
+
 			// Зашифровать ключ
 			byte[] encryptedKey = _rsaPublicKey.Encrypt(key, true);
 			// Сохранить зашифрованный ключ + записать в данные
@@ -119,6 +108,7 @@ namespace VKMessenger.Protocol.Messages
 			Data[0] = (byte)UserMessageType;
 			Buffer.BlockCopy(encryptedKey, 0, Data, 1, encryptedKey.Length);
 			Buffer.BlockCopy(encryptedData, 0, Data, 1 + encryptedKey.Length, encryptedData.Length);
+			
 		}
 
 		/// <summary>
@@ -177,6 +167,9 @@ namespace VKMessenger.Protocol.Messages
 		{
 			MemoryStream ms = new MemoryStream();
 			Rijndael alg = Rijndael.Create();
+			byte[] iv = new byte[alg.BlockSize / 8];
+			Buffer.BlockCopy(key, 0, iv, 0, iv.Length);
+			alg.IV = iv;
 			alg.Key = key;
 			CryptoStream cs = new CryptoStream(ms, alg.CreateEncryptor(), CryptoStreamMode.Write);
 			cs.Write(data, 0, data.Length);
@@ -195,6 +188,9 @@ namespace VKMessenger.Protocol.Messages
 		{
 			MemoryStream ms = new MemoryStream();
 			Rijndael alg = Rijndael.Create();
+			byte[] iv = new byte[alg.BlockSize / 8];
+			Buffer.BlockCopy(key, 0, iv, 0, iv.Length);
+			alg.IV = iv;
 			alg.Key = key;
 			CryptoStream cs = new CryptoStream(ms, alg.CreateDecryptor(), CryptoStreamMode.Write);
 			cs.Write(data, 0, data.Length);

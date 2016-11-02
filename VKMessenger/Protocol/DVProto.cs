@@ -95,6 +95,7 @@ namespace VKMessenger.Protocol
 					csp.KeyContainerName = nameof(VKMessenger) + "_from_" + Convert.ToString(userId);
 					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
 					rsa.PersistKeyInCsp = true;
+					//RSAParameters rsaKeys = rsa.ExportParameters(true);
 					if (!_rsaKeysFrom.ContainsKey(userId))
 					{
 						_rsaKeysFrom.Add(userId, rsa);
@@ -124,6 +125,7 @@ namespace VKMessenger.Protocol
 					csp.KeyContainerName = nameof(VKMessenger) + "_to_" + Convert.ToString(message.Content.UserId.Value);
 					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
 					rsa.ImportCspBlob(responseKeyMessage.RSAPublicKey);
+					//RSAParameters rsaKeys = rsa.ExportParameters(false);
 					rsa.PersistKeyInCsp = true;
 					if (!_rsaKeysTo.ContainsKey(userId))
 					{
@@ -157,6 +159,38 @@ namespace VKMessenger.Protocol
 				}
 				break;
 			default:
+				return false;
+			}
+
+			return true;
+		}
+
+		private bool DoesKeyExists(long userId, bool from)
+		{
+			string containerName;
+
+			if (from)
+			{
+				containerName = nameof(VKMessenger) + "_from_" + Convert.ToString(userId);
+			}
+			else
+			{
+				containerName = nameof(VKMessenger) + "_to_" + Convert.ToString(userId);
+			}
+
+			CspParameters csp = new CspParameters
+			{
+				Flags = CspProviderFlags.UseExistingKey,
+				KeyContainerName = containerName
+			};
+
+			try
+			{
+				RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(csp);
+				rsa.Dispose();
+			}
+			catch (Exception)
+			{
 				return false;
 			}
 
