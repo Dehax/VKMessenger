@@ -17,8 +17,6 @@ namespace VKMessenger.Protocol
 		private VkApi _vk;
 		public VkApi Vk { get { return _vk; } }
 
-		private Dictionary<long, RSACryptoServiceProvider> _rsaKeysTo = new Dictionary<long, RSACryptoServiceProvider>();
-		private Dictionary<long, RSACryptoServiceProvider> _rsaKeysFrom = new Dictionary<long, RSACryptoServiceProvider>();
 		private Dictionary<long, AutoResetEvent> _handshakeEvents = new Dictionary<long, AutoResetEvent>();
 
 		public DVProto(VkApi vk)
@@ -30,13 +28,15 @@ namespace VKMessenger.Protocol
 		{
 			long userId = message.PeerId.Value;
 
-			if (!_rsaKeysTo.ContainsKey(userId))
+			if (TryGetRSAKey(userId, false) == null)
 			{
 				_handshakeEvents.Add(userId, new AutoResetEvent(false));
 
 				await ApplyForPublicKeyAsync(message.PeerId.Value);
 
 				_handshakeEvents[userId].WaitOne();
+
+				_handshakeEvents.Remove(userId);
 			}
 
 			await EncryptAndSendMessageAsync(message, userId);
@@ -70,7 +70,7 @@ namespace VKMessenger.Protocol
 		{
 			return Task.Run(() =>
 			{
-				TextUserMessage textUserMessage = new TextUserMessage(_rsaKeysTo[userId], message.Message);
+				TextUserMessage textUserMessage = new TextUserMessage(TryGetRSAKey(userId, false), message.Message);
 				textUserMessage.Encrypt();
 				Utils.Extensions.BeginVkInvoke(Vk);
 				Vk.Messages.Send(new MessagesSendParams()
@@ -90,21 +90,17 @@ namespace VKMessenger.Protocol
 			{
 			case ServiceMessageType.RequestKey:
 				{
+					// Удалить старый и сгенерировать новый ключ
 					CspParameters csp = new CspParameters();
 					long userId = message.Content.UserId.Value;
 					csp.KeyContainerName = nameof(VKMessenger) + "_from_" + Convert.ToString(userId);
 					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
+					rsa.PersistKeyInCsp = false;
+					rsa.Clear();
+					rsa.Dispose();
+					rsa = new RSACryptoServiceProvider(2048, csp);
 					rsa.PersistKeyInCsp = true;
-					//RSAParameters rsaKeys = rsa.ExportParameters(true);
-					if (!_rsaKeysFrom.ContainsKey(userId))
-					{
-						_rsaKeysFrom.Add(userId, rsa);
-					}
-					else
-					{
-						_rsaKeysFrom[userId].Dispose();
-						_rsaKeysFrom[userId] = rsa;
-					}
+
 					ResponseKeyMessage responseKeyMessage = new ResponseKeyMessage(rsa.ExportCspBlob(false));
 					Utils.Extensions.BeginVkInvoke(Vk);
 					Vk.Messages.Send(new MessagesSendParams()
@@ -117,7 +113,6 @@ namespace VKMessenger.Protocol
 				break;
 			case ServiceMessageType.ResponseKey:
 				{
-					// [CHECKED]
 					// Получен публичный ключ RSA, сохранить для соответствующего пользователя.
 					ResponseKeyMessage responseKeyMessage = new ResponseKeyMessage(message.Content.Body);
 					long userId = message.Content.UserId.Value;
@@ -125,17 +120,8 @@ namespace VKMessenger.Protocol
 					csp.KeyContainerName = nameof(VKMessenger) + "_to_" + Convert.ToString(message.Content.UserId.Value);
 					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
 					rsa.ImportCspBlob(responseKeyMessage.RSAPublicKey);
-					//RSAParameters rsaKeys = rsa.ExportParameters(false);
 					rsa.PersistKeyInCsp = true;
-					if (!_rsaKeysTo.ContainsKey(userId))
-					{
-						_rsaKeysTo.Add(userId, rsa);
-					}
-					else
-					{
-						_rsaKeysTo[userId].Dispose();
-						_rsaKeysTo[userId] = rsa;
-					}
+
 					_handshakeEvents[userId].Set();
 				}
 				break;
@@ -145,7 +131,7 @@ namespace VKMessenger.Protocol
 					{
 					case UserMessageType.Text:
 						{
-							TextUserMessage textUserMessage = new TextUserMessage(message.Content.Body, _rsaKeysFrom[message.Content.FromId.Value]);
+							TextUserMessage textUserMessage = new TextUserMessage(message.Content.Body, TryGetRSAKey(message.Content.FromId.Value, true));
 							result = message;
 							result.Content.Body = textUserMessage.Text;
 						}
@@ -165,7 +151,7 @@ namespace VKMessenger.Protocol
 			return true;
 		}
 
-		private bool DoesKeyExists(long userId, bool from)
+		private RSACryptoServiceProvider TryGetRSAKey(long userId, bool from)
 		{
 			string containerName;
 
@@ -184,17 +170,18 @@ namespace VKMessenger.Protocol
 				KeyContainerName = containerName
 			};
 
+			RSACryptoServiceProvider rsa;
+
 			try
 			{
-				RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(csp);
-				rsa.Dispose();
+				rsa = new RSACryptoServiceProvider(csp);
 			}
 			catch (Exception)
 			{
-				return false;
+				rsa = null;
 			}
 
-			return true;
+			return rsa;
 		}
 	}
 }
