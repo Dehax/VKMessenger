@@ -212,18 +212,10 @@ namespace VKMessenger
 
 		private void ProcessUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
 		{
-			string localAppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.Create);
-
-			StringBuilder sb = new StringBuilder(localAppDataPath);
-			sb.Append(Path.DirectorySeparatorChar);
-			Assembly assembly = Assembly.GetExecutingAssembly();
-			sb.Append(assembly.GetCustomAttribute<AssemblyCompanyAttribute>().Company);
-			sb.Append(Path.DirectorySeparatorChar);
-			sb.Append(assembly.GetCustomAttribute<AssemblyProductAttribute>().Product);
-			Directory.CreateDirectory(sb.ToString());
-			sb.Append(Path.DirectorySeparatorChar);
-			sb.Append(LOG_FILE_NAME);
-			string logFilePath = sb.ToString();
+			StringBuilder localAppFolderPath = new StringBuilder(Utils.Extensions.ApplicationFolderPath);
+			localAppFolderPath.Append(Path.DirectorySeparatorChar);
+			localAppFolderPath.Append(LOG_FILE_NAME);
+			string logFilePath = localAppFolderPath.ToString();
 
 			using (StreamWriter sw = File.CreateText(logFilePath))
 			{

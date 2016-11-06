@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -12,6 +13,9 @@ using VkNet.Model.RequestParams;
 
 namespace VKMessenger.Protocol
 {
+	/// <summary>
+	/// Протокол на основе сквозного шифрования (End-to-End encryption, E2EE).
+	/// </summary>
 	public class DVProto : IEndToEndProtocol
 	{
 		private VkApi _vk;
@@ -28,16 +32,16 @@ namespace VKMessenger.Protocol
 		{
 			long userId = message.PeerId.Value;
 
-			if (TryGetRSAKey(userId, false) == null)
-			{
-				_handshakeEvents.Add(userId, new AutoResetEvent(false));
+			//if (TryGetRSAKey(userId, false) == null)
+			//{
+			_handshakeEvents.Add(userId, new AutoResetEvent(false));
 
-				await ApplyForPublicKeyAsync(message.PeerId.Value);
+			await ApplyForPublicKeyAsync(message.PeerId.Value);
 
-				_handshakeEvents[userId].WaitOne();
+			_handshakeEvents[userId].WaitOne();
 
-				_handshakeEvents.Remove(userId);
-			}
+			_handshakeEvents.Remove(userId);
+			//}
 
 			await EncryptAndSendMessageAsync(message, userId);
 		}
@@ -91,16 +95,17 @@ namespace VKMessenger.Protocol
 			case ServiceMessageType.RequestKey:
 				{
 					// Удалить старый и сгенерировать новый ключ
-					CspParameters csp = new CspParameters();
 					long userId = message.Content.UserId.Value;
-					csp.KeyContainerName = nameof(VKMessenger) + "_from_" + Convert.ToString(userId);
+					CspParameters csp = new CspParameters()
+					{
+						KeyContainerName = nameof(VKMessenger) + "_from_" + Convert.ToString(userId)
+					};
 					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
 					rsa.PersistKeyInCsp = false;
 					rsa.Clear();
-					rsa.Dispose();
 					rsa = new RSACryptoServiceProvider(2048, csp);
-					rsa.PersistKeyInCsp = true;
-
+					//RSAParameters r = rsa.ExportParameters(true);
+					//string rs = rsa.ToXmlString(true);
 					ResponseKeyMessage responseKeyMessage = new ResponseKeyMessage(rsa.ExportCspBlob(false));
 					Utils.Extensions.BeginVkInvoke(Vk);
 					Vk.Messages.Send(new MessagesSendParams()
@@ -116,11 +121,21 @@ namespace VKMessenger.Protocol
 					// Получен публичный ключ RSA, сохранить для соответствующего пользователя.
 					ResponseKeyMessage responseKeyMessage = new ResponseKeyMessage(message.Content.Body);
 					long userId = message.Content.UserId.Value;
-					CspParameters csp = new CspParameters();
-					csp.KeyContainerName = nameof(VKMessenger) + "_to_" + Convert.ToString(message.Content.UserId.Value);
+					CspParameters csp = new CspParameters()
+					{
+						KeyContainerName = nameof(VKMessenger) + "_to_" + Convert.ToString(message.Content.UserId.Value),
+						Flags = CspProviderFlags.CreateEphemeralKey
+					};
 					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
+					//rsa.PersistKeyInCsp = false;
+					//rsa.Clear();
+					//csp.Flags = CspProviderFlags.UseMachineKeyStore;
+					//csp.Flags = CspProviderFlags.UseDefaultKeyContainer;
+					//rsa = new RSACryptoServiceProvider(2048, csp);
 					rsa.ImportCspBlob(responseKeyMessage.RSAPublicKey);
-					rsa.PersistKeyInCsp = true;
+					//RSAParameters r = rsa.ExportParameters(false);
+					//string rs = rsa.ToXmlString(false);
+					SavePublicKey(rsa);
 
 					_handshakeEvents[userId].Set();
 				}
@@ -162,19 +177,23 @@ namespace VKMessenger.Protocol
 			else
 			{
 				containerName = nameof(VKMessenger) + "_to_" + Convert.ToString(userId);
+
+				return GetPublicKey(containerName);
 			}
 
-			CspParameters csp = new CspParameters
+			CspParameters csp = new CspParameters()
 			{
-				Flags = CspProviderFlags.UseExistingKey,
-				KeyContainerName = containerName
+				KeyContainerName = containerName,
+				Flags = CspProviderFlags.UseExistingKey
 			};
 
 			RSACryptoServiceProvider rsa;
 
 			try
 			{
-				rsa = new RSACryptoServiceProvider(csp);
+				rsa = new RSACryptoServiceProvider(2048, csp);
+				//RSAParameters r = rsa.ExportParameters(true);
+				//string rs = rsa.ToXmlString(true);
 			}
 			catch (Exception)
 			{
@@ -182,6 +201,34 @@ namespace VKMessenger.Protocol
 			}
 
 			return rsa;
+		}
+
+		private void SavePublicKey(RSACryptoServiceProvider rsaPublicKey)
+		{
+			string publicKeyXml = rsaPublicKey.ToXmlString(false);
+
+			StringBuilder sb = new StringBuilder(Utils.Extensions.ApplicationFolderPath);
+			sb.Append(Path.DirectorySeparatorChar);
+			sb.Append("PublicKeys");
+			Directory.CreateDirectory(sb.ToString());
+			sb.Append(Path.DirectorySeparatorChar);
+			sb.Append(rsaPublicKey.CspKeyContainerInfo.KeyContainerName + ".xml");
+			File.WriteAllText(sb.ToString(), publicKeyXml);
+		}
+
+		private RSACryptoServiceProvider GetPublicKey(string containerName)
+		{
+			StringBuilder sb = new StringBuilder(Utils.Extensions.ApplicationFolderPath);
+			sb.Append(Path.DirectorySeparatorChar);
+			sb.Append("PublicKeys");
+			sb.Append(Path.DirectorySeparatorChar);
+			sb.Append(containerName + ".xml");
+			string publicKeyXml = File.ReadAllText(sb.ToString());
+
+			RSACryptoServiceProvider rsaPublicKey = new RSACryptoServiceProvider();
+			rsaPublicKey.FromXmlString(publicKeyXml);
+
+			return rsaPublicKey;
 		}
 	}
 }

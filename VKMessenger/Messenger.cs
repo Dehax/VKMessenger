@@ -119,7 +119,7 @@ namespace VKMessenger
 
 			if (authorized)
 			{
-				LoadUserIdAsync();
+				LoadUserId();
 			}
 
 			return authorized;
@@ -179,7 +179,14 @@ namespace VKMessenger
 						}
 
 						JObject response = JObject.Parse(responseText);
-						ts = (ulong)response["ts"];
+						try
+						{
+							ts = (ulong)response["ts"];
+						}
+						catch (Exception)
+						{
+							continue;
+						}
 						JArray updatesArray = (JArray)response["updates"];
 
 						for (int i = 0; i < updatesArray.Count; i++)
@@ -233,7 +240,7 @@ namespace VKMessenger
 		/// <summary>
 		/// Загружает информацию о текущем пользователе.
 		/// </summary>
-		private async void LoadUserIdAsync()
+		private async void LoadUserId()
 		{
 			User = await Task.Run(() =>
 			{
