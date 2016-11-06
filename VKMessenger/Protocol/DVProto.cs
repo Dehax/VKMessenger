@@ -32,16 +32,16 @@ namespace VKMessenger.Protocol
 		{
 			long userId = message.PeerId.Value;
 
-			//if (TryGetRSAKey(userId, false) == null)
-			//{
-			_handshakeEvents.Add(userId, new AutoResetEvent(false));
+			if (TryGetRSAKey(userId, false) == null)
+			{
+				_handshakeEvents.Add(userId, new AutoResetEvent(false));
 
-			await ApplyForPublicKeyAsync(message.PeerId.Value);
+				await ApplyForPublicKeyAsync(message.PeerId.Value);
 
-			_handshakeEvents[userId].WaitOne();
+				_handshakeEvents[userId].WaitOne();
 
-			_handshakeEvents.Remove(userId);
-			//}
+				_handshakeEvents.Remove(userId);
+			}
 
 			await EncryptAndSendMessageAsync(message, userId);
 		}
@@ -94,26 +94,7 @@ namespace VKMessenger.Protocol
 			{
 			case ServiceMessageType.RequestKey:
 				{
-					// Удалить старый и сгенерировать новый ключ
-					long userId = message.Content.UserId.Value;
-					CspParameters csp = new CspParameters()
-					{
-						KeyContainerName = nameof(VKMessenger) + "_from_" + Convert.ToString(userId)
-					};
-					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
-					rsa.PersistKeyInCsp = false;
-					rsa.Clear();
-					rsa = new RSACryptoServiceProvider(2048, csp);
-					//RSAParameters r = rsa.ExportParameters(true);
-					//string rs = rsa.ToXmlString(true);
-					ResponseKeyMessage responseKeyMessage = new ResponseKeyMessage(rsa.ExportCspBlob(false));
-					Utils.Extensions.BeginVkInvoke(Vk);
-					Vk.Messages.Send(new MessagesSendParams()
-					{
-						PeerId = message.Content.UserId.Value,
-						Message = responseKeyMessage.DataBase64
-					});
-					Utils.Extensions.EndVkInvoke();
+					GenerateAndSendNewKey(message);
 				}
 				break;
 			case ServiceMessageType.ResponseKey:
@@ -146,9 +127,16 @@ namespace VKMessenger.Protocol
 					{
 					case UserMessageType.Text:
 						{
-							TextUserMessage textUserMessage = new TextUserMessage(message.Content.Body, TryGetRSAKey(message.Content.FromId.Value, true));
-							result = message;
-							result.Content.Body = textUserMessage.Text;
+							try
+							{
+								TextUserMessage textUserMessage = new TextUserMessage(message.Content.Body, TryGetRSAKey(message.Content.FromId.Value, true));
+								result = message;
+								result.Content.Body = textUserMessage.Text;
+							}
+							catch (CryptographicException)
+							{
+								GenerateAndSendNewKey(message);
+							}
 						}
 						break;
 					case UserMessageType.File:
@@ -164,6 +152,30 @@ namespace VKMessenger.Protocol
 			}
 
 			return true;
+		}
+
+		private void GenerateAndSendNewKey(VkMessage message)
+		{
+			// Удалить старый и сгенерировать новый ключ
+			long userId = message.Content.UserId.Value;
+			CspParameters csp = new CspParameters()
+			{
+				KeyContainerName = nameof(VKMessenger) + "_from_" + Convert.ToString(userId)
+			};
+			RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
+			rsa.PersistKeyInCsp = false;
+			rsa.Clear();
+			rsa = new RSACryptoServiceProvider(2048, csp);
+			//RSAParameters r = rsa.ExportParameters(true);
+			//string rs = rsa.ToXmlString(true);
+			ResponseKeyMessage responseKeyMessage = new ResponseKeyMessage(rsa.ExportCspBlob(false));
+			Utils.Extensions.BeginVkInvoke(Vk);
+			Vk.Messages.Send(new MessagesSendParams()
+			{
+				PeerId = message.Content.UserId.Value,
+				Message = responseKeyMessage.DataBase64
+			});
+			Utils.Extensions.EndVkInvoke();
 		}
 
 		private RSACryptoServiceProvider TryGetRSAKey(long userId, bool from)
@@ -223,10 +235,20 @@ namespace VKMessenger.Protocol
 			sb.Append("PublicKeys");
 			sb.Append(Path.DirectorySeparatorChar);
 			sb.Append(containerName + ".xml");
-			string publicKeyXml = File.ReadAllText(sb.ToString());
 
+			
 			RSACryptoServiceProvider rsaPublicKey = new RSACryptoServiceProvider();
-			rsaPublicKey.FromXmlString(publicKeyXml);
+
+			try
+			{
+				string publicKeyXml = File.ReadAllText(sb.ToString());
+				rsaPublicKey.FromXmlString(publicKeyXml);
+			}
+			catch (FileNotFoundException)
+			{
+				rsaPublicKey.Dispose();
+				rsaPublicKey = null;
+			}
 
 			return rsaPublicKey;
 		}

@@ -82,6 +82,12 @@ namespace VKMessenger
 				});
 			}
 
+			Message msg = new Message();
+			msg.Body = message;
+			msg.FromId = Vk.UserId;
+			msg.UserId = dialog.PeerId;
+			MessageSent?.Invoke(this, new MessageEventArgs(new VkMessage(msg, dialog)));
+
 			return sendMessageTask;
 		}
 
@@ -127,28 +133,24 @@ namespace VKMessenger
 
 		protected virtual void OnNewMessage(VkMessage message)
 		{
-			if (IsEncryptionEnabled)
-			{
-				VkMessage result;
-				if (message.Content.FromId.Value != Vk.UserId.Value && _dvProto.TryParseMessage(message, out result))
-				{
-					if (result != null)
-					{
-						// Расшифрованное сообщение.
-						NewMessage?.Invoke(this, new MessageEventArgs(result));
-					}
-
-					return;
-				}
-			}
-
 			if (message.Content.FromId.Value == Vk.UserId.Value)
 			{
-				MessageSent?.Invoke(this, new MessageEventArgs(message));
+				//MessageSent?.Invoke(this, new MessageEventArgs(message));
 			}
 			else
 			{
-				NewMessage?.Invoke(this, new MessageEventArgs(message));
+				if (IsEncryptionEnabled)
+				{
+					VkMessage result;
+					if (_dvProto.TryParseMessage(message, out result))
+					{
+						if (result != null)
+						{
+							// Расшифрованное сообщение.
+							NewMessage?.Invoke(this, new MessageEventArgs(result));
+						}
+					}
+				}
 			}
 		}
 

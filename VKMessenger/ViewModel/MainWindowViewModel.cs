@@ -31,6 +31,7 @@ namespace VKMessenger.ViewModel
 				{
 					_messenger = value;
 					_messenger.NewMessage += ReceiveNewMessage;
+					_messenger.MessageSent += NewMessageSent;
 					DialogsViewModel.Messenger = _messenger;
 					MessagesViewModel.Messenger = _messenger;
 					DialogsViewModel.LoadDialogs();
@@ -127,6 +128,11 @@ namespace VKMessenger.ViewModel
 
 			OnNewMessage(dialogForMessage, message);
         }
+
+		private void NewMessageSent(object sender, MessageEventArgs e)
+		{
+			ReceiveNewMessage(sender, e);
+		}
 
         private void DialogsViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
