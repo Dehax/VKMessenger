@@ -11,6 +11,9 @@
         xmlns:vkmodel="clr-namespace:VkNet.Model;assembly=VkNet"
         mc:Ignorable="d"
         Title="VK Messenger" Height="362" Width="676" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Icon="/VKMessenger;component/Images/Icons/VKMessenger.ico">
+    <Window.DataContext>
+        <vm:MainViewModel />
+    </Window.DataContext>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="5*" />
@@ -22,15 +25,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!--<tb:TaskbarIcon x:Name="notifyIcon" ToolTipText="VK Messenger" IconSource="/VKMessenger;component/Images/Icons/VKMessenger.ico">
-            <tb:TaskbarIcon.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Command="{Binding ReloginCommand}" Header="Сменить пользователя" />
-                </ContextMenu>
-            </tb:TaskbarIcon.ContextMenu>
-        </tb:TaskbarIcon>-->
-
-        <ListBox Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Name="dialogsListBox" Margin="5"  d:DataContext="{d:DesignInstance Type=designvm:DialogsDesignViewModel, IsDesignTimeCreatable=True}" ItemsSource="{Binding Path=Model.Content}" SelectedIndex="{Binding SelectedDialogIndex}" HorizontalContentAlignment="Stretch">
+        <ListBox Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Name="dialogsListBox" Margin="5" DataContext="{Binding DialogsViewModel}" d:DataContext="{d:DesignInstance Type=designvm:DialogsDesignViewModel, IsDesignTimeCreatable=True}" ItemsSource="{Binding Model.Content}" SelectedIndex="{Binding SelectedDialogIndex}" HorizontalContentAlignment="Stretch">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type model:Dialog}">
                     <Border BorderBrush="Black">
@@ -59,7 +54,7 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <ListBox Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Name="messagesListBox" Margin="5" HorizontalContentAlignment="Stretch" d:DataContext="{d:DesignInstance Type=designvm:MessagesDesignViewModel, IsDesignTimeCreatable=True}" ItemsSource="{Binding Messages}" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+        <ListBox Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Name="messagesListBox" DataContext="{Binding MessagesViewModel}" d:DataContext="{d:DesignInstance Type=designvm:MessagesDesignViewModel, IsDesignTimeCreatable=True}" ItemsSource="{Binding Messages}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="5" HorizontalContentAlignment="Stretch">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type model:VkMessage}">
                     <Border BorderBrush="Black">
@@ -86,7 +81,7 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <TextBox Grid.Column="1" Grid.Row="1" Name="messageTextBox" Margin="5" Text="{Binding MessageText, UpdateSourceTrigger=PropertyChanged}" />
-        <Button Grid.Column="2" Grid.Row="1" Name="sendButton" Margin="5" Width="75" IsDefault="True" Command="{Binding SendMessageCommand}">Отправить</Button>
+        <TextBox x:Uid="messageTextBox" Grid.Column="1" Grid.Row="1" x:Name="messageTextBox" Margin="5" Text="{Binding MessageText, UpdateSourceTrigger=PropertyChanged}" />
+        <Button x:Uid="sendButton" Grid.Column="2" Grid.Row="1" x:Name="sendButton" Margin="5" Width="75" IsDefault="True" Command="{Binding SendMessageCommand}">Отправить</Button>
     </Grid>
 </Window>

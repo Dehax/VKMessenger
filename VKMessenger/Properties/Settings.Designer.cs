@@ -34,5 +34,17 @@ namespace VKMessenger.Properties {
                 this["AccessToken"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool IsEncryptionEnabled {
+            get {
+                return ((bool)(this["IsEncryptionEnabled"]));
+            }
+            set {
+                this["IsEncryptionEnabled"] = value;
+            }
+        }
     }
 }

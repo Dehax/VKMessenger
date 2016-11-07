@@ -40,9 +40,8 @@ namespace VKMessenger
 
 		private bool _cancelRequest = false;
 		private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-
-		private bool _encryptionEnabled = true;
-		public bool IsEncryptionEnabled { get { return _encryptionEnabled; } }
+		
+		public bool IsEncryptionEnabled { get { return Properties.Settings.Default.IsEncryptionEnabled; } }
 
 		private IEndToEndProtocol _dvProto;
 
@@ -113,8 +112,8 @@ namespace VKMessenger
 		/// <summary>
 		/// Выполнить авторизацию с использованием маркера доступа <paramref name="accessToken"/>.
 		/// </summary>
-		/// <param name="accessToken"></param>
-		/// <returns></returns>
+		/// <param name="accessToken">Маркер доступа к VK API</param>
+		/// <returns>true при успешной авторизации</returns>
 		public bool Authorize(string accessToken)
 		{
 			Utils.Extensions.BeginVkInvoke(Vk);
@@ -149,6 +148,10 @@ namespace VKMessenger
 							// Расшифрованное сообщение.
 							NewMessage?.Invoke(this, new MessageEventArgs(result));
 						}
+					}
+					else
+					{
+						NewMessage?.Invoke(this, new MessageEventArgs(message));
 					}
 				}
 			}

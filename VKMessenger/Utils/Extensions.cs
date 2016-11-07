@@ -84,8 +84,8 @@ namespace VKMessenger.Utils
 				sb.Append(assembly.GetCustomAttribute<AssemblyCompanyAttribute>().Company);
 				sb.Append(Path.DirectorySeparatorChar);
 				sb.Append(assembly.GetCustomAttribute<AssemblyProductAttribute>().Product);
-				Directory.CreateDirectory(sb.ToString());
 				_localAppFolderPath = sb.ToString();
+				Directory.CreateDirectory(_localAppFolderPath);
 
 				return _localAppFolderPath;
 			}

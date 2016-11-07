@@ -19,7 +19,7 @@ namespace VKMessenger.ViewModel
         }
     }
 
-	public class MainWindowViewModel : INotifyPropertyChanged
+	public class MainViewModel : INotifyPropertyChanged
     {
         private Messenger _messenger;
 		public Messenger Messenger
@@ -90,7 +90,7 @@ namespace VKMessenger.ViewModel
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public MainWindowViewModel()
+        public MainViewModel()
         {
             DialogsViewModel.PropertyChanged += DialogsViewModel_PropertyChanged;
             SendMessageCommand = new SimpleCommand(SendMessageExecute, CanSendMessage);

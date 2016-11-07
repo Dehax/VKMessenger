@@ -7,16 +7,20 @@ namespace VKMessenger.View
 {
 	public partial class MainWindow : Window
     {
-        private MainWindowViewModel _viewModel = new MainWindowViewModel();
+        private MainViewModel _viewModel;
 
 		public MainWindow()
         {
             InitializeComponent();
+
+			_viewModel = DataContext as MainViewModel;
+
+			if (_viewModel == null)
+			{
+				throw new NotSupportedException("Не поддерживается ViewModel, отличный от MainViewModel");
+			}
 			
-            DataContext = _viewModel;
-            dialogsListBox.DataContext = _viewModel.DialogsViewModel;
             dialogsListBox.ItemsSource = _viewModel.DialogsViewModel.Model.Content;
-            messagesListBox.DataContext = _viewModel.MessagesViewModel;
             messagesListBox.ItemsSource = _viewModel.MessagesViewModel.Model.Content;
 
             _viewModel.NewMessage += ReceiveNewMessage;

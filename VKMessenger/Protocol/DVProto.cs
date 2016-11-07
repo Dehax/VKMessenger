@@ -244,7 +244,7 @@ namespace VKMessenger.Protocol
 				string publicKeyXml = File.ReadAllText(sb.ToString());
 				rsaPublicKey.FromXmlString(publicKeyXml);
 			}
-			catch (FileNotFoundException)
+			catch (Exception ex) when (ex is FileNotFoundException || ex is DirectoryNotFoundException)
 			{
 				rsaPublicKey.Dispose();
 				rsaPublicKey = null;

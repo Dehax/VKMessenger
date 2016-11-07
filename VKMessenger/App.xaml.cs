@@ -28,13 +28,15 @@ namespace VKMessenger
 		private TaskbarIcon _taskbarIcon;
 
 		public SimpleCommand ReloginCommand { get; set; }
+		public SimpleCommand SettingsCommand { get; set; }
 
 		public App()
 		{
 			ShutdownMode = ShutdownMode.OnExplicitShutdown;
 			DispatcherUnhandledException += ProcessUnhandledException;
 
-			ReloginCommand = new SimpleCommand(() => { Relogin(); }, () => { return true; });
+			ReloginCommand = new SimpleCommand(Relogin, () => { return true; });
+			SettingsCommand = new SimpleCommand(OpenSettings, () => { return true; });
 		}
 
 		protected override void OnStartup(StartupEventArgs e)
@@ -46,11 +48,18 @@ namespace VKMessenger
 			_taskbarIcon.IconSource = new BitmapImage(new Uri(@"pack://application:,,,/VKMessenger;component/Images/Icons/VKMessenger.ico"));
 			_taskbarIcon.TrayMouseDoubleClick += taskbarIcon_TrayMouseDoubleClick;
 			_taskbarIcon.ContextMenu = new ContextMenu();
-			MenuItem reloginMenuItem = new MenuItem();
-			reloginMenuItem.Command = ReloginCommand;
-			//reloginMenuItem.CommandBindings.Add(new CommandBinding(ReloginCommand));
-			reloginMenuItem.Header = "Сменить пользователя";
+			MenuItem reloginMenuItem = new MenuItem()
+			{
+				Command = ReloginCommand,
+				Header = "Сменить пользователя"
+			};
+			MenuItem settingsMenuItem = new MenuItem()
+			{
+				Command = SettingsCommand,
+				Header = "Настройки"
+			};
 			_taskbarIcon.ContextMenu.Items.Add(reloginMenuItem);
+			_taskbarIcon.ContextMenu.Items.Add(settingsMenuItem);
 
 			if (Authenticate())
 			{
@@ -77,11 +86,11 @@ namespace VKMessenger
 		private void ShowMainWindow()
 		{
 			MainWindow mainWindow = new MainWindow();
-			MainWindowViewModel vm = mainWindow.DataContext as MainWindowViewModel;
+			MainViewModel vm = mainWindow.DataContext as MainViewModel;
 
 			if (vm == null)
 			{
-				throw new ArgumentNullException(nameof(vm), "MainWindow.DataContext is not MainWindowViewModel!");
+				throw new ArgumentNullException(nameof(vm), "MainWindow.DataContext is not MainViewModel!");
 			}
 
 			vm.Messenger = _messenger;
@@ -125,6 +134,12 @@ namespace VKMessenger
 			ShowMainWindow();
 		}
 
+		private void OpenSettings()
+		{
+			SettingsWindow settingsWindow = new SettingsWindow();
+			settingsWindow.ShowDialog();
+		}
+
 		private bool Authenticate(bool relogin = false)
 		{
 			string accessToken = Settings.Default.AccessToken;
@@ -147,11 +162,10 @@ namespace VKMessenger
 				{
 					Settings.Default.AccessToken = accessToken;
 					Settings.Default.Save();
-
-					MessageBox.Show("Авторизация прошла успешно!", "Авторизовано");
 				}
 				else
 				{
+					MessageBox.Show("Ошибка авторизации!", "Не авторизован");
 					return false;
 				}
 			}

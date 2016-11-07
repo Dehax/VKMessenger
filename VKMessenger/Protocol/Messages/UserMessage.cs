@@ -54,8 +54,6 @@ namespace VKMessenger.Protocol.Messages
 		{
 			Type = ServiceMessageType.UserMessage;
 			_rsaPublicKey = rsaPublicKey;
-			//RSAParameters r = _rsaPublicKey.ExportParameters(false);
-			//string rs = _rsaPublicKey.ToXmlString(false);
 		}
 
 		/// <summary>
@@ -78,8 +76,6 @@ namespace VKMessenger.Protocol.Messages
 			byte[] encryptedContent = new byte[Data.Length - ENCRYPTED_KEY_SIZE - 1];
 			Buffer.BlockCopy(Data, 1, encryptedKey, 0, ENCRYPTED_KEY_SIZE);
 			Buffer.BlockCopy(Data, 1 + ENCRYPTED_KEY_SIZE, encryptedContent, 0, encryptedContent.Length);
-			//RSAParameters r = rsaPrivateKey.ExportParameters(true);
-			//string rs = rsaPrivateKey.ToXmlString(true);
 			byte[] key = rsaPrivateKey.Decrypt(encryptedKey, true);
 			byte[] signedContent = DecryptData(encryptedContent, key);
 			byte[] content;
