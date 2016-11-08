@@ -6,6 +6,9 @@ using VkNet.Enums.Filters;
 
 namespace VKMessenger.View
 {
+	/// <summary>
+	/// Окно авторизации.
+	/// </summary>
 	public partial class AuthorizationWindow : Window
     {
         private long APPLICATION_ID = 5570691;

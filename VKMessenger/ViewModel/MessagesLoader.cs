@@ -57,10 +57,9 @@ namespace VKMessenger.ViewModel
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public MessagesLoader(/*Messenger messenger*/)
+        public MessagesLoader()
         {
-            /*_messenger = messenger;*/
-        }
+		}
 
         protected virtual async void OnDialogChanged()
         {

@@ -14,6 +14,9 @@ namespace VKMessenger.ViewModel
 	{
 		public event PropertyChangedEventHandler PropertyChanged;
 		
+		/// <summary>
+		/// Показывает, включено ли сквозное шифрование (E2EE).
+		/// </summary>
 		public bool IsEncryptionEnabled
 		{
 			get
@@ -27,6 +30,9 @@ namespace VKMessenger.ViewModel
 			}
 		}
 
+		/// <summary>
+		/// Команда сохранения настроек.
+		/// </summary>
 		public SimpleCommand SaveSettingsCommand { get; set; }
 
 		public SettingsViewModel()

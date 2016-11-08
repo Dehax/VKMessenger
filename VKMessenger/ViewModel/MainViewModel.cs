@@ -39,6 +39,7 @@ namespace VKMessenger.ViewModel
 				}
 			}
 		}
+
 		public VkApi Vk { get { return _messenger.Vk; } }
 
         private DialogsLoader _dialogsViewModel = new DialogsLoader();
@@ -70,6 +71,9 @@ namespace VKMessenger.ViewModel
         }
 
         private string _messageText;
+		/// <summary>
+		/// Текст нового сообщения для отправки.
+		/// </summary>
         public string MessageText
         {
             get { return _messageText; }
@@ -83,9 +87,15 @@ namespace VKMessenger.ViewModel
                 }
             }
         }
-
+		
+		/// <summary>
+		/// Команда отправки нового сообщения.
+		/// </summary>
         public SimpleCommand SendMessageCommand { get; set; }
 
+		/// <summary>
+		/// Вызывается при получении нового сообщения.
+		/// </summary>
 		public event EventHandler<NewMessageEventArgs> NewMessage;
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -96,6 +106,9 @@ namespace VKMessenger.ViewModel
             SendMessageCommand = new SimpleCommand(SendMessageExecute, CanSendMessage);
         }
 
+		/// <summary>
+		/// Обрабатывает новое сообщение.
+		/// </summary>
         private void ReceiveNewMessage(object sender, MessageEventArgs e)
         {
             VkMessage message = e.Message;
@@ -129,8 +142,12 @@ namespace VKMessenger.ViewModel
 			OnNewMessage(dialogForMessage, message);
         }
 
+		/// <summary>
+		/// Обрабатывает отправленное сообщение.
+		/// </summary>
 		private void NewMessageSent(object sender, MessageEventArgs e)
 		{
+			// TODO: Check this out.
 			ReceiveNewMessage(sender, e);
 		}
 
@@ -150,23 +167,29 @@ namespace VKMessenger.ViewModel
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
+		/// <summary>
+		/// Вызывает событие получения нового сообщения.
+		/// </summary>
+		/// <param name="dialog">Диалог, сообщение которого было получено.</param>
+		/// <param name="message">Сообщение, которое было получено.</param>
         protected virtual void OnNewMessage(Dialog dialog, VkMessage message)
         {
             NewMessage?.Invoke(this, new NewMessageEventArgs(dialog, message));
         }
 
+		/// <summary>
+		/// Отправляет новое сообщение.
+		/// </summary>
         private async void SendMessageExecute()
         {
-            try
-            {
-                /*long sentMessageId = */await _messenger.SendMessage(MessageText, DialogsViewModel.SelectedDialog);
-                MessageText = string.Empty;
-            }
-            catch (Exception)
-            {
-            }
-        }
+			await _messenger.SendMessage(MessageText, DialogsViewModel.SelectedDialog);
+			MessageText = string.Empty;
+		}
 
+		/// <summary>
+		/// Проверяет возможность отправки сообщения.
+		/// </summary>
+		/// <returns></returns>
         private bool CanSendMessage()
         {
             return !string.IsNullOrWhiteSpace(MessageText) && DialogsViewModel.SelectedDialog != null;

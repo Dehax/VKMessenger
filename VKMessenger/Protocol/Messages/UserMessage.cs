@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace VKMessenger.Protocol.Messages
 {
+	/// <summary>
+	/// Тип пользовательского сообщения.
+	/// </summary>
 	public enum UserMessageType : byte
 	{
 		Text = 1,
@@ -17,6 +20,9 @@ namespace VKMessenger.Protocol.Messages
 		None = 127
 	}
 
+	/// <summary>
+	/// Пользовательское сообщение.
+	/// </summary>
 	public abstract class UserMessage : ServiceMessage
 	{
 		private const int ENCRYPTED_KEY_SIZE = 256;

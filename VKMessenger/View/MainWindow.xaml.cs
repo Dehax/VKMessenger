@@ -5,6 +5,9 @@ using VKMessenger.ViewModel;
 
 namespace VKMessenger.View
 {
+	/// <summary>
+	/// Основное окно мессенджера.
+	/// </summary>
 	public partial class MainWindow : Window
     {
         private MainViewModel _viewModel;

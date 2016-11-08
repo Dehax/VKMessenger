@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace VKMessenger.Protocol.Messages
 {
+	/// <summary>
+	/// Пользовательское сообщение, передающее файл.
+	/// </summary>
 	public class FileUserMessage : UserMessage
 	{
 		private string _fileName;

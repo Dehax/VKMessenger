@@ -15,7 +15,7 @@ using System.Windows.Shapes;
 namespace VKMessenger.View
 {
 	/// <summary>
-	/// Логика взаимодействия для SettingsWindow.xaml
+	/// Окно настроек мессенджера.
 	/// </summary>
 	public partial class SettingsWindow : Window
 	{

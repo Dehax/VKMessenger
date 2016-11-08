@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 
 namespace VKMessenger.Protocol.Messages
 {
+	/// <summary>
+	/// Пользовательское текстовое сообщение.
+	/// </summary>
 	public class TextUserMessage : UserMessage
 	{
 		private string _text;

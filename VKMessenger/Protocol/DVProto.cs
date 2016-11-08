@@ -21,6 +21,7 @@ namespace VKMessenger.Protocol
 		private VkApi _vk;
 		public VkApi Vk { get { return _vk; } }
 
+		// Список ожидаемых рукопожатий.
 		private Dictionary<long, AutoResetEvent> _handshakeEvents = new Dictionary<long, AutoResetEvent>();
 
 		public DVProto(VkApi vk)
@@ -28,6 +29,10 @@ namespace VKMessenger.Protocol
 			_vk = vk;
 		}
 
+		/// <summary>
+		/// Оправить новое сообщение с использованием сквозного шифрования (E2EE).
+		/// </summary>
+		/// <param name="message">Параметры нового сообщения.</param>
 		public async void SendMessage(MessagesSendParams message)
 		{
 			long userId = message.PeerId.Value;
@@ -86,6 +91,12 @@ namespace VKMessenger.Protocol
 			});
 		}
 
+		/// <summary>
+		/// Попытаться разобрать сообщение с использованием протокола DVProto.
+		/// </summary>
+		/// <param name="message">Сообщение, которое необходимо разобрать.</param>
+		/// <param name="result">Результат разбора сообщения.</param>
+		/// <returns></returns>
 		public bool TryParseMessage(VkMessage message, out VkMessage result)
 		{
 			result = null;
@@ -154,6 +165,10 @@ namespace VKMessenger.Protocol
 			return true;
 		}
 
+		/// <summary>
+		/// Сгенерировать и отправить новый публичный ключ.
+		/// </summary>
+		/// <param name="message">Параметры сообщения, содержащие ID пользователя, которому необходимо отправить ключ.</param>
 		private void GenerateAndSendNewKey(VkMessage message)
 		{
 			// Удалить старый и сгенерировать новый ключ
@@ -215,6 +230,10 @@ namespace VKMessenger.Protocol
 			return rsa;
 		}
 
+		/// <summary>
+		/// Сохранить публичный ключ RSA.
+		/// </summary>
+		/// <param name="rsaPublicKey">Публичный ключ RSA.</param>
 		private void SavePublicKey(RSACryptoServiceProvider rsaPublicKey)
 		{
 			string publicKeyXml = rsaPublicKey.ToXmlString(false);
@@ -228,6 +247,11 @@ namespace VKMessenger.Protocol
 			File.WriteAllText(sb.ToString(), publicKeyXml);
 		}
 
+		/// <summary>
+		/// Получить публичный ключ RSA.
+		/// </summary>
+		/// <param name="containerName">Имя ключа, который необходимо получить.</param>
+		/// <returns>Публичный ключ RSA</returns>
 		private RSACryptoServiceProvider GetPublicKey(string containerName)
 		{
 			StringBuilder sb = new StringBuilder(Utils.Extensions.ApplicationFolderPath);

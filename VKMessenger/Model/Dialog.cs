@@ -5,9 +5,15 @@ using VkNet.Model;
 
 namespace VKMessenger.Model
 {
+	/// <summary>
+	/// Диалог с одним или чат с несколькими пользователями.
+	/// </summary>
 	public class Dialog : INotifyPropertyChanged
     {
         private Messages _messages = new Messages();
+		/// <summary>
+		/// Список сообщений диалога.
+		/// </summary>
         public Messages Messages
         {
             get { return _messages; }
@@ -22,6 +28,9 @@ namespace VKMessenger.Model
         }
 
         private string _photo;
+		/// <summary>
+		/// URL аватара диалога.
+		/// </summary>
         public string Photo
         {
             get
@@ -45,11 +54,17 @@ namespace VKMessenger.Model
             }
         }
 
+		/// <summary>
+		/// Является ли данный диалог чатом с несколькими собеседниками.
+		/// </summary>
         public bool IsChat
         {
             get { return Chat != null; }
         }
 
+		/// <summary>
+		/// ID пользователя-собеседника в случае диалога, или ID чата.
+		/// </summary>
         public long PeerId
         {
             get
@@ -66,6 +81,9 @@ namespace VKMessenger.Model
         }
 
         private User _user;
+		/// <summary>
+		/// Пользователь-собеседник.
+		/// </summary>
         public User User
         {
             get { return _user; }
@@ -80,6 +98,9 @@ namespace VKMessenger.Model
         }
 
         private List<User> _users;
+		/// <summary>
+		/// Список пользователей-собеседников.
+		/// </summary>
         public List<User> Users
         {
             get { return _users; }
@@ -94,6 +115,9 @@ namespace VKMessenger.Model
         }
 
         private Chat _chat;
+		/// <summary>
+		/// Чат.
+		/// </summary>
         public Chat Chat
         {
             get { return _chat; }
@@ -107,6 +131,9 @@ namespace VKMessenger.Model
             }
         }
 
+		/// <summary>
+		/// Название диалога.
+		/// </summary>
         public string Title
         {
             get

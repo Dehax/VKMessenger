@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace VKMessenger.Protocol.Messages
 {
+	/// <summary>
+	/// Служебное сообщение ответа на запрос публичного ключа.
+	/// </summary>
 	public class ResponseKeyMessage : ServiceMessage
 	{
 		private const int RSA_PUBLIC_KEY_SIZE = 276;

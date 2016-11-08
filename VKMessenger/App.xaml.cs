@@ -27,7 +27,13 @@ namespace VKMessenger
 
 		private TaskbarIcon _taskbarIcon;
 
+		/// <summary>
+		/// Команда смены пользователя.
+		/// </summary>
 		public SimpleCommand ReloginCommand { get; set; }
+		/// <summary>
+		/// Команда вызова настроек.
+		/// </summary>
 		public SimpleCommand SettingsCommand { get; set; }
 
 		public App()
@@ -76,7 +82,7 @@ namespace VKMessenger
 		{
 			((MainWindow)MainWindow).UnTrayWindow();
 		}
-
+		
 		protected override void OnExit(ExitEventArgs e)
 		{
 			_taskbarIcon.Dispose();
@@ -84,6 +90,9 @@ namespace VKMessenger
 			base.OnExit(e);
 		}
 
+		/// <summary>
+		/// Отображает новое окно.
+		/// </summary>
 		private void ShowMainWindow()
 		{
 			MainWindow mainWindow = new MainWindow();
@@ -96,7 +105,6 @@ namespace VKMessenger
 
 			vm.Messenger = _messenger;
 			vm.Messenger.Start();
-			//vm.Relogin += Relogin;
 			vm.NewMessage += NewMessage;
 
 			MainWindow = mainWindow;
@@ -104,6 +112,9 @@ namespace VKMessenger
 			mainWindow.Closed += MainWindow_Closed;
 		}
 
+		/// <summary>
+		/// Отображает новое сообщение уведомлениеме в трее.
+		/// </summary>
 		private void NewMessage(object sender, NewMessageEventArgs e)
 		{
 			if (e.Message.Content.FromId != Messenger.User.Id)
@@ -118,6 +129,9 @@ namespace VKMessenger
 			}
 		}
 
+		/// <summary>
+		/// Сменить пользователя.
+		/// </summary>
 		private async void Relogin()
 		{
 			_messenger.Stop();
@@ -135,12 +149,20 @@ namespace VKMessenger
 			ShowMainWindow();
 		}
 
+		/// <summary>
+		/// Отобразить окно настроек.
+		/// </summary>
 		private void OpenSettings()
 		{
 			SettingsWindow settingsWindow = new SettingsWindow();
 			settingsWindow.ShowDialog();
 		}
 
+		/// <summary>
+		/// Аутентифицировать.
+		/// </summary>
+		/// <param name="relogin">Запросить смену пользователя.</param>
+		/// <returns>Показывает успешность аутентификации</returns>
 		private bool Authenticate(bool relogin = false)
 		{
 			string accessToken = Settings.Default.AccessToken;
@@ -174,6 +196,9 @@ namespace VKMessenger
 			return true;
 		}
 
+		/// <summary>
+		/// Установить совместимую версию эмуляции браузера.
+		/// </summary>
 		private void SetupWebBrowserEmulationVersion()
 		{
 			string appName = Process.GetCurrentProcess().ProcessName + ".exe";
@@ -225,6 +250,9 @@ namespace VKMessenger
 			}
 		}
 
+		/// <summary>
+		/// Обработать исключение на уровне приложения.
+		/// </summary>
 		private void ProcessUnhandledException(object sender, UnhandledExceptionEventArgs e)
 		{
 			StringBuilder localAppFolderPath = new StringBuilder(Utils.Extensions.ApplicationFolderPath);

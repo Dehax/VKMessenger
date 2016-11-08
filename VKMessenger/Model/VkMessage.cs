@@ -4,6 +4,9 @@ using VkNet.Model;
 
 namespace VKMessenger.Model
 {
+	/// <summary>
+	/// Сообщение.
+	/// </summary>
 	public class VkMessage : INotifyPropertyChanged
     {
         private Message _message;

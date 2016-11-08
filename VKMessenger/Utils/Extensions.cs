@@ -11,7 +11,13 @@ namespace VKMessenger.Utils
 {
 	public static class Extensions
 	{
+		/// <summary>
+		/// Точное время последнего вызова VK API-метода.
+		/// </summary>
 		private static DateTime _lastVkInvokeTime;
+		/// <summary>
+		/// Объект синхронизации.
+		/// </summary>
 		private static readonly object _syncRoot = new object();
 		//private static Mutex _mutex = new Mutex(false, @"Local\VKMessenger");
 		private static string _localAppFolderPath = null;
@@ -42,6 +48,10 @@ namespace VKMessenger.Utils
 			}
 		}
 
+		/// <summary>
+		/// Получить право выполнить вызов метода VK API.
+		/// </summary>
+		/// <param name="vk"></param>
 		public static void BeginVkInvoke(VkApi vk)
 		{
 			lock (_syncRoot)
@@ -58,6 +68,9 @@ namespace VKMessenger.Utils
 			}
 		}
 
+		/// <summary>
+		/// Освободить право выполнения метода VK API.
+		/// </summary>
 		public static void EndVkInvoke()
 		{
 			lock (_syncRoot)
@@ -66,7 +79,10 @@ namespace VKMessenger.Utils
 				//_mutex.ReleaseMutex();
 			}
 		}
-
+		
+		/// <summary>
+		/// Путь к папке программы в локальной папке пользователя.
+		/// </summary>
 		public static string ApplicationFolderPath
 		{
 			get

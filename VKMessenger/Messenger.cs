@@ -35,12 +35,21 @@ namespace VKMessenger
 
 		public static User User { get; set; }
 
+		/// <summary>
+		/// Происходит при получении нового сообщения.
+		/// </summary>
 		public event EventHandler<MessageEventArgs> NewMessage;
+		/// <summary>
+		/// Происходит при успешном отправлении нового сообщения.
+		/// </summary>
 		public event EventHandler<MessageEventArgs> MessageSent;
 
 		private bool _cancelRequest = false;
 		private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
-		
+
+		/// <summary>
+		/// Показывает, включено ли сквозное шифрование (E2EE).
+		/// </summary>
 		public bool IsEncryptionEnabled { get { return Properties.Settings.Default.IsEncryptionEnabled; } }
 
 		private IEndToEndProtocol _dvProto;
@@ -50,9 +59,14 @@ namespace VKMessenger
 			_dvProto = new DVProto(Vk);
 		}
 
-		public Task/*<long>*/ SendMessage(string message, Dialog dialog)
+		/// <summary>
+		/// Отправить сообщение в указанный диалог.
+		/// </summary>
+		/// <param name="message">Текст сообщения для отправки.</param>
+		/// <param name="dialog">Диалог, в который будет отправлено сообщение.</param>
+		public Task SendMessage(string message, Dialog dialog)
 		{
-			Task/*<long>*/ sendMessageTask;
+			Task sendMessageTask;
 
 			if (IsEncryptionEnabled)
 			{
@@ -130,31 +144,41 @@ namespace VKMessenger
 			return authorized;
 		}
 
+		/// <summary>
+		/// Получено новое сообщение.
+		/// </summary>
+		/// <param name="message"></param>
 		protected virtual void OnNewMessage(VkMessage message)
 		{
-			if (message.Content.FromId.Value == Vk.UserId.Value)
+			if (IsEncryptionEnabled)
 			{
-				//MessageSent?.Invoke(this, new MessageEventArgs(message));
+				VkMessage result;
+				if (_dvProto.TryParseMessage(message, out result))
+				{
+					if (result != null)
+					{
+						// Расшифрованное сообщение.
+						NewMessage?.Invoke(this, new MessageEventArgs(result));
+					}
+				}
+				else
+				{
+					NewMessage?.Invoke(this, new MessageEventArgs(message));
+				}
 			}
 			else
 			{
-				if (IsEncryptionEnabled)
-				{
-					VkMessage result;
-					if (_dvProto.TryParseMessage(message, out result))
-					{
-						if (result != null)
-						{
-							// Расшифрованное сообщение.
-							NewMessage?.Invoke(this, new MessageEventArgs(result));
-						}
-					}
-					else
-					{
-						NewMessage?.Invoke(this, new MessageEventArgs(message));
-					}
-				}
+				NewMessage?.Invoke(this, new MessageEventArgs(message));
 			}
+		}
+
+		/// <summary>
+		/// Отправлено новое сообщение.
+		/// </summary>
+		/// <param name="message"></param>
+		protected virtual void OnMessageSent(VkMessage message)
+		{
+			MessageSent?.Invoke(this, new MessageEventArgs(message));
 		}
 
 		/// <summary>
@@ -229,6 +253,7 @@ namespace VKMessenger
 									});
 
 									OnNewMessage(message);
+									
 								}
 								break;
 							}
