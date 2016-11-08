@@ -7,7 +7,6 @@
         xmlns:local="clr-namespace:VKMessenger.View"
         xmlns:model="clr-namespace:VKMessenger.Model"
         xmlns:vm="clr-namespace:VKMessenger.ViewModel"
-        xmlns:designvm="clr-namespace:VKMessenger.ViewModel.Design"
         xmlns:vkmodel="clr-namespace:VkNet.Model;assembly=VkNet"
         mc:Ignorable="d"
         Title="VK Messenger" Height="362" Width="676" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Icon="/VKMessenger;component/Images/Icons/VKMessenger.ico">
@@ -25,7 +24,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ListBox Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Name="dialogsListBox" Margin="5" DataContext="{Binding DialogsViewModel}" d:DataContext="{d:DesignInstance Type=designvm:DialogsDesignViewModel, IsDesignTimeCreatable=True}" ItemsSource="{Binding Model.Content}" SelectedIndex="{Binding SelectedDialogIndex}" HorizontalContentAlignment="Stretch">
+        <ListBox Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Name="dialogsListBox" Margin="5" ItemsSource="{Binding Dialogs}" SelectedIndex="{Binding SelectedDialogIndex}" HorizontalContentAlignment="Stretch">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type model:Dialog}">
                     <Border BorderBrush="Black">
@@ -54,7 +53,7 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <ListBox Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Name="messagesListBox" DataContext="{Binding MessagesViewModel}" d:DataContext="{d:DesignInstance Type=designvm:MessagesDesignViewModel, IsDesignTimeCreatable=True}" ItemsSource="{Binding Messages}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="5" HorizontalContentAlignment="Stretch">
+        <ListBox Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Name="messagesListBox" ItemsSource="{Binding Messages}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="5" HorizontalContentAlignment="Stretch">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type model:VkMessage}">
                     <Border BorderBrush="Black">

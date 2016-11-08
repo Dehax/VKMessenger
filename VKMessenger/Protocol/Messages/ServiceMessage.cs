@@ -11,11 +11,26 @@ namespace VKMessenger.Protocol.Messages
 	/// </summary>
 	public enum ServiceMessageType : byte
 	{
+		/// <summary>
+		/// Запрос публичного ключа.
+		/// </summary>
 		RequestKey = 1,
+		/// <summary>
+		/// Ответ на запрос публичного ключа.
+		/// </summary>
 		ResponseKey = 2,
-		UserMessage = 3,
+		/// <summary>
+		/// Пользовательское сообщение.
+		/// </summary>
+		UserMessage = 32,
+		/// <summary>
+		/// Неизвестный тип сообщения.
+		/// </summary>
 		Unknown = 100,
-		None = 127
+		/// <summary>
+		/// Сообщение не является служебным.
+		/// </summary>
+		None = 255
 	}
 
 	/// <summary>

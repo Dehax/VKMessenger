@@ -1,5 +1,4 @@
-﻿using Hardcodet.Wpf.TaskbarNotification;
-using System;
+﻿using System;
 using System.Windows;
 using VKMessenger.ViewModel;
 
@@ -23,8 +22,8 @@ namespace VKMessenger.View
 				throw new NotSupportedException("Не поддерживается ViewModel, отличный от MainViewModel");
 			}
 			
-            dialogsListBox.ItemsSource = _viewModel.DialogsViewModel.Model.Content;
-            messagesListBox.ItemsSource = _viewModel.MessagesViewModel.Model.Content;
+            dialogsListBox.ItemsSource = _viewModel.Dialogs;
+            messagesListBox.ItemsSource = _viewModel.Messages;
 
             _viewModel.NewMessage += ReceiveNewMessage;
             
@@ -33,7 +32,7 @@ namespace VKMessenger.View
 
 		private void ReceiveNewMessage(object sender, NewMessageEventArgs e)
         {
-            if (e.Dialog == _viewModel.DialogsViewModel.SelectedDialog)
+            if (e.Dialog == _viewModel.SelectedDialog)
             {
                 Dispatcher.Invoke(() =>
                 {

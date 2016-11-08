@@ -18,6 +18,9 @@ namespace VKMessenger.Protocol
 	/// </summary>
 	public class DVProto : IEndToEndProtocol
 	{
+		private const int ENCRYPTION_KEY_SIZE = 32;
+		private const int ENCRYPTION_IV_SIZE = 4;
+
 		private VkApi _vk;
 		public VkApi Vk { get { return _vk; } }
 
@@ -80,7 +83,14 @@ namespace VKMessenger.Protocol
 			return Task.Run(() =>
 			{
 				TextUserMessage textUserMessage = new TextUserMessage(TryGetRSAKey(userId, false), message.Message);
-				textUserMessage.Encrypt();
+				byte[] key = new byte[ENCRYPTION_KEY_SIZE];
+				byte[] iv = new byte[ENCRYPTION_IV_SIZE];
+				using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+				{
+					rng.GetBytes(key);
+					rng.GetBytes(iv);
+				}
+				textUserMessage.Encrypt(key, iv);
 				Utils.Extensions.BeginVkInvoke(Vk);
 				Vk.Messages.Send(new MessagesSendParams()
 				{

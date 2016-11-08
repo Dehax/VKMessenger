@@ -97,15 +97,15 @@ namespace VKMessenger.Protocol.Messages
 		/// <summary>
 		/// Подписывает и зашифровывает данные пользовательского сообщения.
 		/// </summary>
-		public void Encrypt()
+		public void Encrypt(byte[] key, byte[] iv)
 		{
 			// Создать подпись, добавить в пользовательские данные
 			byte[] signedData = SignData(UserMessageData);
-			// Сгенерировать Rijndael-ключ
-			byte[] key = new byte[ENCRYPTION_KEY_SIZE];
-			RandomNumberGenerator.Create().GetBytes(key);
+			//// Сгенерировать Rijndael-ключ
+			//byte[] key = new byte[ENCRYPTION_KEY_SIZE];
+			//RandomNumberGenerator.Create().GetBytes(key);
 			// Зашифровать данные ключом
-			byte[] encryptedData = EncryptData(signedData, key);
+			byte[] encryptedData = EncryptData(signedData, key, iv);
 
 			// Зашифровать ключ
 			byte[] encryptedKey = _rsaPublicKey.Encrypt(key, true);
@@ -169,13 +169,13 @@ namespace VKMessenger.Protocol.Messages
 		/// <param name="data">Данные для шифрования</param>
 		/// <param name="key">Ключ Rijndael</param>
 		/// <returns></returns>
-		private byte[] EncryptData(byte[] data, byte[] key)
+		private byte[] EncryptData(byte[] data, byte[] key, byte[] iv)
 		{
 			MemoryStream ms = new MemoryStream();
 			Rijndael alg = Rijndael.Create();
-			byte[] iv = new byte[alg.BlockSize / 8];
-			Buffer.BlockCopy(key, 0, iv, 0, iv.Length);
-			alg.IV = iv;
+			byte[] ivKey = new byte[alg.BlockSize / 8];
+			Buffer.BlockCopy(key, 0, ivKey, 0, ivKey.Length);
+			alg.IV = ivKey;
 			alg.Key = key;
 			CryptoStream cs = new CryptoStream(ms, alg.CreateEncryptor(), CryptoStreamMode.Write);
 			cs.Write(data, 0, data.Length);

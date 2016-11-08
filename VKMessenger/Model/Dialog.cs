@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using VkNet.Model;
@@ -10,11 +11,11 @@ namespace VKMessenger.Model
 	/// </summary>
 	public class Dialog : INotifyPropertyChanged
     {
-        private Messages _messages = new Messages();
+        private ObservableCollection<VkMessage> _messages = new ObservableCollection<VkMessage>();
 		/// <summary>
 		/// Список сообщений диалога.
 		/// </summary>
-        public Messages Messages
+        public ObservableCollection<VkMessage> Messages
         {
             get { return _messages; }
             set

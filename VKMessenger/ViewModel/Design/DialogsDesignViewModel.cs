@@ -1,10 +1,11 @@
-﻿using VKMessenger.Model;
+﻿using System.Collections.ObjectModel;
+using VKMessenger.Model;
 
 namespace VKMessenger.ViewModel.Design
 {
 	public class DialogsDesignViewModel
     {
-        public Dialogs Model { get; set; } = new Dialogs(new Dialog[]
+        public ObservableCollection<Dialog> Model { get; set; } = new ObservableCollection<Dialog>(new Dialog[]
         {
             new Dialog()
             {
