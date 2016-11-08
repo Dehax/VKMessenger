@@ -33,7 +33,8 @@ namespace VKMessenger
 		public App()
 		{
 			ShutdownMode = ShutdownMode.OnExplicitShutdown;
-			DispatcherUnhandledException += ProcessUnhandledException;
+			AppDomain.CurrentDomain.UnhandledException += ProcessUnhandledException;
+			//DispatcherUnhandledException += ProcessUnhandledException;
 
 			ReloginCommand = new SimpleCommand(Relogin, () => { return true; });
 			SettingsCommand = new SimpleCommand(OpenSettings, () => { return true; });
@@ -224,7 +225,7 @@ namespace VKMessenger
 			}
 		}
 
-		private void ProcessUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+		private void ProcessUnhandledException(object sender, UnhandledExceptionEventArgs e)
 		{
 			StringBuilder localAppFolderPath = new StringBuilder(Utils.Extensions.ApplicationFolderPath);
 			localAppFolderPath.Append(Path.DirectorySeparatorChar);
@@ -234,10 +235,12 @@ namespace VKMessenger
 			using (StreamWriter sw = File.CreateText(logFilePath))
 			{
 				sw.WriteLine(DateTime.Now.ToString() + " - Необработанное исключение:");
-				sw.WriteLine(e.Exception);
+				sw.WriteLine(e.ExceptionObject);
 			}
 
 			MessageBox.Show($"Приложение прекратило работу из-за непредвиденной ошибки. Посмотрите файл журнала \"{ logFilePath }\"", "Exception");
+
+			Process.Start(logFilePath);
 		}
 	}
 }
