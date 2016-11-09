@@ -15,11 +15,7 @@ namespace VKMessenger.Utils
 		/// Точное время последнего вызова VK API-метода.
 		/// </summary>
 		private static DateTime _lastVkInvokeTime;
-		/// <summary>
-		/// Объект синхронизации.
-		/// </summary>
-		private static readonly object _syncRoot = new object();
-		//private static Mutex _mutex = new Mutex(false, @"Local\VKMessenger");
+		private static Mutex _mutex = new Mutex(false, "VKMessenger");
 		private static string _localAppFolderPath = null;
 
 		static Extensions()
@@ -54,17 +50,14 @@ namespace VKMessenger.Utils
 		/// <param name="vk"></param>
 		public static void BeginVkInvoke(VkApi vk)
 		{
-			lock (_syncRoot)
-			{
-				//_mutex.WaitOne();
-				TimeSpan lastDelay = DateTime.Now - _lastVkInvokeTime;
+			_mutex.WaitOne();
+			TimeSpan lastDelay = DateTime.Now - _lastVkInvokeTime;
 
-				int delay = 1000 / vk.RequestsPerSecond + 1;
-				int timespan = (int)lastDelay.TotalMilliseconds - 1;
-				if (timespan < delay)
-				{
-					Thread.Sleep(delay - timespan);
-				}
+			int delay = 1000 / vk.RequestsPerSecond + 1;
+			int timespan = (int)lastDelay.TotalMilliseconds - 1;
+			if (timespan < delay)
+			{
+				Thread.Sleep(delay - timespan);
 			}
 		}
 
@@ -73,13 +66,10 @@ namespace VKMessenger.Utils
 		/// </summary>
 		public static void EndVkInvoke()
 		{
-			lock (_syncRoot)
-			{
-				_lastVkInvokeTime = DateTime.Now;
-				//_mutex.ReleaseMutex();
-			}
+			_lastVkInvokeTime = DateTime.Now;
+			_mutex.ReleaseMutex();
 		}
-		
+
 		/// <summary>
 		/// Путь к папке программы в локальной папке пользователя.
 		/// </summary>

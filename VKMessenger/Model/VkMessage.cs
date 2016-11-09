@@ -25,6 +25,9 @@ namespace VKMessenger.Model
             get { return Date?.ToString("dd.MM.yyyy HH:mm:ss"); }
         }
 
+		/// <summary>
+		/// Фамилия Имя автора сообщения.
+		/// </summary>
 		public string AuthorFullName
 		{
 			get
