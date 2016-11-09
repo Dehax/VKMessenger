@@ -64,7 +64,7 @@ namespace VKMessenger
 		/// </summary>
 		/// <param name="message">Текст сообщения для отправки.</param>
 		/// <param name="dialog">Диалог, в который будет отправлено сообщение.</param>
-		public async Task<long> SendMessage(string message, Dialog dialog)
+		public async Task<long> SendMessage(string message, Conversation dialog)
 		{
 			Task<long> sendMessageTask;
 
@@ -72,7 +72,7 @@ namespace VKMessenger
 			{
 				sendMessageTask = Task.Run(() =>
 				{
-					return _dvProto.SendMessage(new MessagesSendParams()
+					return _dvProto.SendMessageAsync(new MessagesSendParams()
 					{
 						PeerId = dialog.PeerId,
 						Message = message
@@ -180,12 +180,12 @@ namespace VKMessenger
 
 									VkMessage message = new VkMessage(await LoadMessageAsync((long)messageId));
 
-									message.Content.FromId = ((flags & 2) == 0) ? message.Content.UserId : Vk.UserId;
+									message.FromId = ((flags & 2) == 0) ? message.UserId : Vk.UserId;
 
 									message.Author = await Task.Run(() =>
 									{
 										Utils.Extensions.BeginVkInvoke(Vk);
-										User user = Vk.Users.Get(message.Content.FromId.Value);
+										User user = Vk.Users.Get(message.FromId.Value);
 										Utils.Extensions.EndVkInvoke();
 
 										return user;

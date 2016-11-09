@@ -14,7 +14,7 @@ namespace VKMessenger.ViewModel.Design
                 Body = "Тестовое сообщение 1.",
                 Date = DateTime.Now,
                 FromId = 1
-            }, new Dialog() {
+            }, new Conversation() {
                 User = new User()
                 {
                     FirstName = "Имя",
@@ -32,7 +32,7 @@ namespace VKMessenger.ViewModel.Design
                 Body = "Очень длинное тестовое сообщение.\nС переносом строки.\nПозволяет протестировать ширину шаблона.",
                 Date = DateTime.Now,
                 FromId = 2
-            }, new Dialog() {
+            }, new Conversation() {
                 User = new User()
                 {
                     FirstName = "Имя",

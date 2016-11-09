@@ -7,67 +7,71 @@ namespace VKMessenger.Model
 	/// <summary>
 	/// Сообщение.
 	/// </summary>
-	public class VkMessage : INotifyPropertyChanged
+	public class VkMessage : Message, INotifyPropertyChanged
     {
-        private Message _message;
-        public Message Content
-        {
-            get { return _message; }
-        }
-
-        public Dialog Dialog { get; set; }
-
+		/// <summary>
+		/// Беседа.
+		/// </summary>
+        public Conversation Conversation { get; set; }
+		/// <summary>
+		/// Автор сообщения.
+		/// </summary>
         public User Author { get; set; }
-
+		/// <summary>
+		/// Время сообщения.
+		/// </summary>
         public string TimePrint
         {
-            get { return _message.Date?.ToString("dd.MM.yyyy HH:mm:ss"); }
+            get { return Date?.ToString("dd.MM.yyyy HH:mm:ss"); }
         }
 
-        public string Title
+		public string AuthorFullName
+		{
+			get
+			{
+				if (Conversation.IsChat)
+				{
+					string title = Conversation.Title;
+
+					foreach (User user in Conversation.Users)
+					{
+						if (FromId == user.Id)
+						{
+							title = $"{user.FirstName} {user.LastName}";
+							break;
+						}
+					}
+
+					return title;
+				}
+				else
+				{
+					if (FromId == Conversation.User.Id)
+					{
+						return $"{Conversation.User.FirstName} {Conversation.User.LastName}";
+					}
+					else
+					{
+						return $"{Messenger.User.FirstName} {Messenger.User.LastName}";
+					}
+				}
+			}
+		}
+
+		/// <summary>
+		/// URL аватара беседы.
+		/// </summary>
+		public string Image
         {
             get
             {
-                if (Dialog.IsChat)
+                if (Conversation.IsChat)
                 {
-                    string title = Dialog.Title;
+                    string image = Conversation.Photo;
 
-                    foreach (User user in Dialog.Users)
+                    foreach (User user in Conversation.Users)
                     {
-                        if (Content.FromId == user.Id)
-                        {
-                            title = $"{user.FirstName} {user.LastName}";
-                            break;
-                        }
-                    }
-
-                    return title;
-                }
-                else
-                {
-                    if (Content.FromId == Dialog.User.Id)
-                    {
-                        return $"{Dialog.User.FirstName} {Dialog.User.LastName}";
-                    }
-                    else
-                    {
-                        return $"{Messenger.User.FirstName} {Messenger.User.LastName}";
-                    }
-                }
-            }
-        }
-
-        public string Image
-        {
-            get
-            {
-                if (Dialog.IsChat)
-                {
-                    string image = Dialog.Photo;
-
-                    foreach (User user in Dialog.Users)
-                    {
-                        if (Content.FromId == user.Id)
+                        if (FromId == user.Id)
                         {
                             image = user.Photo50.AbsoluteUri;
                             break;
@@ -78,9 +82,9 @@ namespace VKMessenger.Model
                 }
                 else
                 {
-                    if (Content.FromId == Dialog.User.Id)
+                    if (FromId == Conversation.User.Id)
                     {
-                        return Dialog.User.Photo50.AbsoluteUri;
+                        return Conversation.User.Photo50.AbsoluteUri;
                     }
                     else
                     {
@@ -92,25 +96,59 @@ namespace VKMessenger.Model
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public VkMessage()
+		protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
+
+		public VkMessage()
         {
-            _message = new Message();
         }
 
-        public VkMessage(Message message)
-        {
-            _message = message;
-        }
+		public VkMessage(Message message)
+		{
+			Action = message.Action;
+			ActionEmail = message.ActionEmail;
+			ActionMid = message.ActionMid;
+			ActionText = message.ActionText;
+			AdminId = message.AdminId;
+			Attachments = message.Attachments;
+			Body = message.Body;
+			ChatActiveIds = message.ChatActiveIds;
+			ChatId = message.ChatId;
+			ChatPushSettings = message.ChatPushSettings;
+			ContainsEmojiSmiles = message.ContainsEmojiSmiles;
+			Date = message.Date;
+			ForwardedMessages = message.ForwardedMessages;
+			FromId = message.FromId;
+			Geo = message.Geo;
+			InRead = message.InRead;
+			IsDeleted = message.IsDeleted;
+			IsImportant = message.IsImportant;
+			OutRead = message.OutRead;
+			Photo100 = message.Photo100;
+			Photo200 = message.Photo200;
+			Photo50 = message.Photo50;
+			PhotoPreviews = message.PhotoPreviews;
+			ReadState = message.ReadState;
+			Title = message.Title;
+			Type = message.Type;
+			Unread = message.Unread;
+			UserId = message.UserId;
+			UsersCount = message.UsersCount;
+		}
 
-        public VkMessage(Message message, Dialog dialog)
-        {
-            _message = message;
-            Dialog = dialog;
-        }
-
-        protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
+		/// <summary>
+		/// Создаёт и добавляет сообщение в беседу.
+		/// </summary>
+		/// <param name="message">Сообщение.</param>
+		/// <param name="conversation">Беседа.</param>
+		public VkMessage(Message message, Conversation conversation)
+			: this(message)
+		{
+			Conversation = conversation;
+			// TODO: Необходимо?
+			Conversation.Messages.Add(this);
+		}
+	}
 }

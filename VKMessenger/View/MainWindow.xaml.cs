@@ -22,7 +22,7 @@ namespace VKMessenger.View
 				throw new NotSupportedException("Не поддерживается ViewModel, отличный от MainViewModel");
 			}
 			
-            dialogsListBox.ItemsSource = _viewModel.Dialogs;
+            dialogsListBox.ItemsSource = _viewModel.Conversations;
             messagesListBox.ItemsSource = _viewModel.Messages;
 
             _viewModel.NewMessage += ReceiveNewMessage;

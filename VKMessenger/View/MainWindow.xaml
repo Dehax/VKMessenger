@@ -26,7 +26,7 @@
 
         <ListBox Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Name="dialogsListBox" Margin="5" ItemsSource="{Binding Dialogs}" SelectedIndex="{Binding SelectedDialogIndex}" HorizontalContentAlignment="Stretch">
             <ListBox.ItemTemplate>
-                <DataTemplate DataType="{x:Type model:Dialog}">
+                <DataTemplate DataType="{x:Type model:Conversation}">
                     <Border BorderBrush="Black">
                         <Grid x:Name="item">
                             <Grid.ColumnDefinitions>
@@ -38,9 +38,9 @@
                             </Grid.RowDefinitions>
 
                             <Border Grid.Column="0" Grid.Row="0" BorderThickness="1" BorderBrush="Black" Margin="5">
-                                <Image Source="{Binding Path=Photo, Mode=OneWay}" Width="50" Height="50" />
+                                <Image Source="{Binding Photo, Mode=OneWay}" Width="50" Height="50" />
                             </Border>
-                            <Label Grid.Column="1" Grid.Row="0" Content="{Binding Path=Title, Mode=OneWay}" Margin="0,5" VerticalContentAlignment="Center" />
+                            <Label Grid.Column="1" Grid.Row="0" Content="{Binding Title, Mode=OneWay}" Margin="0,5" VerticalContentAlignment="Center" />
                         </Grid>
                     </Border>
 
@@ -53,7 +53,7 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <ListBox Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Name="messagesListBox" ItemsSource="{Binding Messages}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="5" HorizontalContentAlignment="Stretch">
+        <ListBox Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Name="messagesListBox" ItemsSource="{Binding Messages}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="5" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="False">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type model:VkMessage}">
                     <Border BorderBrush="Black">
@@ -71,8 +71,8 @@
                             <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Margin="10,5" BorderThickness="1" BorderBrush="Black" VerticalAlignment="Top" HorizontalAlignment="Left">
                                 <Image Width="50" Height="50" Source="{Binding Image}" />
                             </Border>
-                            <Label Grid.Column="1" Grid.Row="0" FontWeight="Bold" Content="{Binding Title}" />
-                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Content.Body}" TextWrapping="Wrap" />
+                            <Label Grid.Column="1" Grid.Row="0" FontWeight="Bold" Content="{Binding AuthorFullName, Mode=OneWay}" />
+                            <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding Body}" TextWrapping="Wrap" />
                             <Label Grid.Column="2" Grid.Row="0" Grid.RowSpan="2" Content="{Binding TimePrint}" />
                         </Grid>
                     </Border>

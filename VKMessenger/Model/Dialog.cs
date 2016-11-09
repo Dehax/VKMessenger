@@ -7,13 +7,13 @@ using VkNet.Model;
 namespace VKMessenger.Model
 {
 	/// <summary>
-	/// Диалог с одним или чат с несколькими пользователями.
+	/// Беседа (диалог с одним пользователем или чат с несколькими).
 	/// </summary>
-	public class Dialog : INotifyPropertyChanged
+	public class Conversation : INotifyPropertyChanged
     {
         private ObservableCollection<VkMessage> _messages = new ObservableCollection<VkMessage>();
 		/// <summary>
-		/// Список сообщений диалога.
+		/// Список сообщений беседы.
 		/// </summary>
         public ObservableCollection<VkMessage> Messages
         {
@@ -30,7 +30,7 @@ namespace VKMessenger.Model
 
         private string _photo;
 		/// <summary>
-		/// URL аватара диалога.
+		/// URL аватара беседы.
 		/// </summary>
         public string Photo
         {
@@ -56,7 +56,7 @@ namespace VKMessenger.Model
         }
 
 		/// <summary>
-		/// Является ли данный диалог чатом с несколькими собеседниками.
+		/// Является ли данная беседа чатом.
 		/// </summary>
         public bool IsChat
         {
@@ -64,7 +64,7 @@ namespace VKMessenger.Model
         }
 
 		/// <summary>
-		/// ID пользователя-собеседника в случае диалога, или ID чата.
+		/// ID пользователя-собеседника в случае диалога или ID чата.
 		/// </summary>
         public long PeerId
         {
@@ -133,7 +133,7 @@ namespace VKMessenger.Model
         }
 
 		/// <summary>
-		/// Название диалога.
+		/// Название беседы.
 		/// </summary>
         public string Title
         {
@@ -156,13 +156,13 @@ namespace VKMessenger.Model
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public Dialog()
-        {
-        }
+		protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
 
-        protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
+		public Conversation()
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

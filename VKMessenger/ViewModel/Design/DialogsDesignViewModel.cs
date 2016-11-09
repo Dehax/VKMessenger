@@ -5,16 +5,16 @@ namespace VKMessenger.ViewModel.Design
 {
 	public class DialogsDesignViewModel
     {
-        public ObservableCollection<Dialog> Model { get; set; } = new ObservableCollection<Dialog>(new Dialog[]
+        public ObservableCollection<Conversation> Model { get; set; } = new ObservableCollection<Conversation>(new Conversation[]
         {
-            new Dialog()
+            new Conversation()
             {
                 Chat = new VkNet.Model.Chat()
                 {
                     Title = "Чат 1"
                 }
             },
-            new Dialog()
+            new Conversation()
             {
                 User = new VkNet.Model.User()
                 {

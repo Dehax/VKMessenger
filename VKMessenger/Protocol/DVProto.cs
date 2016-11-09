@@ -36,7 +36,7 @@ namespace VKMessenger.Protocol
 		/// Оправить новое сообщение с использованием сквозного шифрования (E2EE).
 		/// </summary>
 		/// <param name="message">Параметры нового сообщения.</param>
-		public async Task<long> SendMessage(MessagesSendParams message)
+		public async Task<long> SendMessageAsync(MessagesSendParams message)
 		{
 			long userId = message.PeerId.Value;
 
@@ -113,7 +113,7 @@ namespace VKMessenger.Protocol
 		{
 			result = null;
 
-			switch (ServiceMessage.CheckServiceMessageType(message.Content.Body))
+			switch (ServiceMessage.CheckServiceMessageType(message.Body))
 			{
 			case ServiceMessageType.RequestKey:
 				{
@@ -123,11 +123,11 @@ namespace VKMessenger.Protocol
 			case ServiceMessageType.ResponseKey:
 				{
 					// Получен публичный ключ RSA, сохранить для соответствующего пользователя.
-					ResponseKeyMessage responseKeyMessage = new ResponseKeyMessage(message.Content.Body);
-					long userId = message.Content.UserId.Value;
+					ResponseKeyMessage responseKeyMessage = new ResponseKeyMessage(message.Body);
+					long userId = message.UserId.Value;
 					CspParameters csp = new CspParameters()
 					{
-						KeyContainerName = nameof(VKMessenger) + "_to_" + Convert.ToString(message.Content.UserId.Value),
+						KeyContainerName = nameof(VKMessenger) + "_to_" + Convert.ToString(message.UserId.Value),
 						Flags = CspProviderFlags.CreateEphemeralKey
 					};
 					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
@@ -146,15 +146,15 @@ namespace VKMessenger.Protocol
 				break;
 			case ServiceMessageType.UserMessage:
 				{
-					switch (UserMessage.CheckUserMessageType(message.Content.Body))
+					switch (UserMessage.CheckUserMessageType(message.Body))
 					{
 					case UserMessageType.Text:
 						{
 							try
 							{
-								TextUserMessage textUserMessage = new TextUserMessage(message.Content.Body, TryGetRSAKey(message.Content.FromId.Value, true));
+								TextUserMessage textUserMessage = new TextUserMessage(message.Body, TryGetRSAKey(message.FromId.Value, true));
 								result = message;
-								result.Content.Body = textUserMessage.Text;
+								result.Body = textUserMessage.Text;
 							}
 							catch (CryptographicException)
 							{
@@ -184,7 +184,7 @@ namespace VKMessenger.Protocol
 		private void GenerateAndSendNewKey(VkMessage message)
 		{
 			// Удалить старый и сгенерировать новый ключ
-			long userId = message.Content.UserId.Value;
+			long userId = message.UserId.Value;
 			CspParameters csp = new CspParameters()
 			{
 				KeyContainerName = nameof(VKMessenger) + "_from_" + Convert.ToString(userId)
@@ -199,7 +199,7 @@ namespace VKMessenger.Protocol
 			Utils.Extensions.BeginVkInvoke(Vk);
 			Vk.Messages.Send(new MessagesSendParams()
 			{
-				PeerId = message.Content.UserId.Value,
+				PeerId = message.UserId.Value,
 				Message = responseKeyMessage.DataBase64
 			});
 			Utils.Extensions.EndVkInvoke();

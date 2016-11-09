@@ -117,10 +117,10 @@ namespace VKMessenger
 		/// </summary>
 		private void NewMessage(object sender, NewMessageEventArgs e)
 		{
-			if (e.Message.Content.FromId != Messenger.User.Id)
+			if (e.Message.FromId != Messenger.User.Id)
 			{
 				string title = e.Dialog != null ? e.Dialog.Title : "Новый диалог";
-				string message = e.Message.Content.Body;
+				string message = e.Message.Body;
 
 				Dispatcher.Invoke(() =>
 				{

@@ -15,10 +15,10 @@ namespace VKMessenger.ViewModel
 {
 	public class NewMessageEventArgs : EventArgs
     {
-        public Dialog Dialog { get; set; }
+        public Conversation Dialog { get; set; }
         public VkMessage Message { get; set; }
 
-        public NewMessageEventArgs(Dialog dialog, VkMessage message)
+        public NewMessageEventArgs(Conversation dialog, VkMessage message)
         {
             Dialog = dialog;
             Message = message;
@@ -85,11 +85,11 @@ namespace VKMessenger.ViewModel
 			}
 		}
 
-		private ObservableCollection<Dialog> _dialogs = new ObservableCollection<Dialog>();
+		private ObservableCollection<Conversation> _dialogs = new ObservableCollection<Conversation>();
 		/// <summary>
 		/// Список диалогов пользователя.
 		/// </summary>
-		public ObservableCollection<Dialog> Dialogs
+		public ObservableCollection<Conversation> Conversations
 		{
 			get { return _dialogs; }
 			set
@@ -105,9 +105,9 @@ namespace VKMessenger.ViewModel
 		/// <summary>
 		/// Выбранный диалог.
 		/// </summary>
-		public Dialog SelectedDialog
+		public Conversation SelectedDialog
 		{
-			get { return SelectedDialogIndex >= 0 ? Dialogs[SelectedDialogIndex] : null; }
+			get { return SelectedDialogIndex >= 0 ? Conversations[SelectedDialogIndex] : null; }
 		}
 
 		private ObservableCollection<VkMessage> _messages = new ObservableCollection<VkMessage>();
@@ -159,13 +159,13 @@ namespace VKMessenger.ViewModel
 		private void ReceiveNewMessage(object sender, MessageEventArgs e)
         {
             VkMessage message = e.Message;
-            Dialog currentDialog = SelectedDialog;
+            Conversation currentDialog = SelectedDialog;
 
             if (currentDialog != null
-                && ((currentDialog.IsChat && currentDialog.Chat.Id == message.Content.ChatId)
-                || (!currentDialog.IsChat && currentDialog.User.Id == message.Content.UserId.Value)))
+                && ((currentDialog.IsChat && currentDialog.Chat.Id == message.ChatId)
+                || (!currentDialog.IsChat && currentDialog.User.Id == message.UserId.Value)))
             {
-                message.Dialog = currentDialog;
+                message.Conversation = currentDialog;
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
@@ -173,15 +173,15 @@ namespace VKMessenger.ViewModel
                 });
             }
 			
-            Dialog dialogForMessage = currentDialog;
+            Conversation dialogForMessage = currentDialog;
 
-			foreach (Dialog dialog in Dialogs)
+			foreach (Conversation dialog in Conversations)
 			{
-				if ((dialog.IsChat && dialog.Chat.Id == message.Content.ChatId)
-					|| (!dialog.IsChat && dialog.User.Id == message.Content.UserId.Value))
+				if ((dialog.IsChat && dialog.Chat.Id == message.ChatId)
+					|| (!dialog.IsChat && dialog.User.Id == message.UserId.Value))
 				{
 					dialogForMessage = dialog;
-					message.Dialog = dialogForMessage;
+					message.Conversation = dialogForMessage;
 					break;
 				}
 			}
@@ -203,7 +203,7 @@ namespace VKMessenger.ViewModel
 		/// </summary>
 		/// <param name="dialog">Диалог, сообщение которого было получено.</param>
 		/// <param name="message">Сообщение, которое было получено.</param>
-        protected virtual void OnNewMessage(Dialog dialog, VkMessage message)
+        protected virtual void OnNewMessage(Conversation dialog, VkMessage message)
         {
             NewMessage?.Invoke(this, new NewMessageEventArgs(dialog, message));
         }
@@ -239,7 +239,7 @@ namespace VKMessenger.ViewModel
 					continue;
 				}
 
-				Dialog dialog = new Dialog();
+				Conversation dialog = new Conversation();
 				VkMessage message = new VkMessage(lastMessage, dialog);
 
 				if (lastMessage.ChatId.HasValue)
@@ -254,7 +254,7 @@ namespace VKMessenger.ViewModel
 				}
 
 
-				Dialogs.Add(dialog);
+				Conversations.Add(dialog);
 			}
 		}
 
@@ -337,7 +337,7 @@ namespace VKMessenger.ViewModel
 			});
 		}
 
-		public void SetData(IEnumerable<Message> messages, Dialog dialog)
+		public void SetData(IEnumerable<Message> messages, Conversation dialog)
 		{
 			_messages.Clear();
 
