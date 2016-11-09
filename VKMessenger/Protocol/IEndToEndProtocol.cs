@@ -17,7 +17,7 @@ namespace VKMessenger.Protocol
 		/// Отправить сообщение.
 		/// </summary>
 		/// <param name="message">Параметры сообщения.</param>
-		void SendMessage(MessagesSendParams message);
+		long SendMessage(MessagesSendParams message);
 		/// <summary>
 		/// Разобрать сообщение.
 		/// </summary>

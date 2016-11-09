@@ -64,15 +64,15 @@ namespace VKMessenger
 		/// </summary>
 		/// <param name="message">Текст сообщения для отправки.</param>
 		/// <param name="dialog">Диалог, в который будет отправлено сообщение.</param>
-		public Task SendMessage(string message, Dialog dialog)
+		public async Task<long> SendMessage(string message, Dialog dialog)
 		{
-			Task sendMessageTask;
+			Task<long> sendMessageTask;
 
 			if (IsEncryptionEnabled)
 			{
 				sendMessageTask = Task.Run(() =>
 				{
-					_dvProto.SendMessage(new MessagesSendParams()
+					return _dvProto.SendMessage(new MessagesSendParams()
 					{
 						PeerId = dialog.PeerId,
 						Message = message
@@ -91,17 +91,29 @@ namespace VKMessenger
 					});
 					Utils.Extensions.EndVkInvoke();
 
-					//return id;
+					return id;
 				});
 			}
 
-			Message msg = new Message();
-			msg.Body = message;
-			msg.FromId = Vk.UserId;
-			msg.UserId = dialog.PeerId;
+			long messageId = await sendMessageTask;
+
+			Message msg = await LoadMessageAsync(messageId);
+
 			MessageSent?.Invoke(this, new MessageEventArgs(new VkMessage(msg, dialog)));
 
-			return sendMessageTask;
+			return messageId;
+		}
+
+		private Task<Message> LoadMessageAsync(long messageId)
+		{
+			return Task.Run(() =>
+			{
+				Utils.Extensions.BeginVkInvoke(Vk);
+				Message msg = Vk.Messages.GetById((ulong)messageId);
+				Utils.Extensions.EndVkInvoke();
+
+				return msg;
+			});
 		}
 
 		/// <summary>
@@ -112,6 +124,94 @@ namespace VKMessenger
 			_cancellationTokenSource.Dispose();
 			_cancellationTokenSource = new CancellationTokenSource();
 			await ListenMessagesAsync();
+		}
+
+		/// <summary>
+		/// Запустить цикл мгновенного получения новых сообщений.
+		/// </summary>
+		/// <returns></returns>
+		private Task ListenMessagesAsync()
+		{
+			return Task.Run(async () =>
+			{
+				LongPollServerResponse longPoll = Vk.Messages.GetLongPollServer(true, true);
+
+				string longPollUrl = @"https://{0}?act=a_check&key={1}&ts={2}&wait=25";
+				ulong ts = longPoll.Ts;
+
+				try
+				{
+					while (!_cancelRequest)
+					{
+						HttpWebRequest req = WebRequest.CreateHttp(string.Format(longPollUrl, longPoll.Server, longPoll.Key, ts));
+						HttpWebResponse resp = await Utils.Extensions.GetResponseAsync(req, _cancellationTokenSource.Token);
+						string responseText;
+
+						using (StreamReader stream = new StreamReader(resp.GetResponseStream(), Encoding.UTF8))
+						{
+							responseText = stream.ReadToEnd();
+						}
+
+						JObject response = JObject.Parse(responseText);
+						try
+						{
+							ts = (ulong)response["ts"];
+						}
+						catch (Exception)
+						{
+							continue;
+						}
+
+						JArray updatesArray = (JArray)response["updates"];
+
+						for (int i = 0; i < updatesArray.Count; i++)
+						{
+							JArray eventArray = (JArray)updatesArray[i];
+
+							int eventType = (int)eventArray[0];
+
+							switch (eventType)
+							{
+							case 4:
+								{
+									// Новое сообщение
+									ulong messageId = (ulong)eventArray[1];
+									ulong flags = (ulong)eventArray[2];
+
+									VkMessage message = new VkMessage(await LoadMessageAsync((long)messageId));
+
+									message.Content.FromId = ((flags & 2) == 0) ? message.Content.UserId : Vk.UserId;
+
+									message.Author = await Task.Run(() =>
+									{
+										Utils.Extensions.BeginVkInvoke(Vk);
+										User user = Vk.Users.Get(message.Content.FromId.Value);
+										Utils.Extensions.EndVkInvoke();
+
+										return user;
+									});
+
+									if ((flags & 2) == 0)
+									{
+										// Новое сообщение
+										OnNewMessage(message);
+									}
+									else
+									{
+										// Успешно отправлено сообщение
+										OnMessageSent(message);
+									}
+								}
+								break;
+							}
+						}
+					}
+				}
+				catch (OperationCanceledException)
+				{
+					_cancelRequest = false;
+				}
+			});
 		}
 
 		/// <summary>
@@ -175,96 +275,10 @@ namespace VKMessenger
 		/// <summary>
 		/// Отправлено новое сообщение.
 		/// </summary>
-		/// <param name="message"></param>
+		/// <param name="message">Отправленное сообщение</param>
 		protected virtual void OnMessageSent(VkMessage message)
 		{
 			MessageSent?.Invoke(this, new MessageEventArgs(message));
-		}
-
-		/// <summary>
-		/// Запустить цикл мгновенного получения новых сообщений.
-		/// </summary>
-		/// <returns></returns>
-		private Task ListenMessagesAsync()
-		{
-			return Task.Run(async () =>
-			{
-				LongPollServerResponse longPoll = Vk.Messages.GetLongPollServer(true, true);
-
-				string longPollUrl = @"https://{0}?act=a_check&key={1}&ts={2}&wait=25";
-				ulong ts = longPoll.Ts;
-
-				try
-				{
-					while (!_cancelRequest)
-					{
-						HttpWebRequest req = WebRequest.CreateHttp(string.Format(longPollUrl, longPoll.Server, longPoll.Key, ts));
-						HttpWebResponse resp = await Utils.Extensions.GetResponseAsync(req, _cancellationTokenSource.Token);
-						string responseText;
-
-						using (StreamReader stream = new StreamReader(resp.GetResponseStream(), Encoding.UTF8))
-						{
-							responseText = stream.ReadToEnd();
-						}
-
-						JObject response = JObject.Parse(responseText);
-						try
-						{
-							ts = (ulong)response["ts"];
-						}
-						catch (Exception)
-						{
-							continue;
-						}
-						JArray updatesArray = (JArray)response["updates"];
-
-						for (int i = 0; i < updatesArray.Count; i++)
-						{
-							JArray eventArray = (JArray)updatesArray[i];
-
-							int eventType = (int)eventArray[0];
-
-							switch (eventType)
-							{
-							case 4:
-								{
-									// Новое сообщение
-									ulong messageId = (ulong)eventArray[1];
-									ulong flags = (ulong)eventArray[2];
-
-									VkMessage message = await Task.Run(() =>
-									{
-										Utils.Extensions.BeginVkInvoke(Vk);
-										VkMessage result = new VkMessage(Vk.Messages.GetById(messageId));
-										Utils.Extensions.EndVkInvoke();
-
-										return result;
-									});
-
-									message.Content.FromId = ((flags & 2) == 0) ? message.Content.UserId : Vk.UserId;
-
-									message.Author = await Task.Run(() =>
-									{
-										Utils.Extensions.BeginVkInvoke(Vk);
-										User user = Vk.Users.Get(message.Content.FromId.Value);
-										Utils.Extensions.EndVkInvoke();
-
-										return user;
-									});
-
-									OnNewMessage(message);
-									
-								}
-								break;
-							}
-						}
-					}
-				}
-				catch (OperationCanceledException)
-				{
-					_cancelRequest = false;
-				}
-			});
 		}
 
 		/// <summary>

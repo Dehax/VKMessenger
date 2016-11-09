@@ -36,7 +36,7 @@ namespace VKMessenger.Protocol
 		/// Оправить новое сообщение с использованием сквозного шифрования (E2EE).
 		/// </summary>
 		/// <param name="message">Параметры нового сообщения.</param>
-		public async void SendMessage(MessagesSendParams message)
+		public async Task<long> SendMessage(MessagesSendParams message)
 		{
 			long userId = message.PeerId.Value;
 
@@ -51,7 +51,7 @@ namespace VKMessenger.Protocol
 				_handshakeEvents.Remove(userId);
 			}
 
-			await EncryptAndSendMessageAsync(message, userId);
+			return await EncryptAndSendMessageAsync(message, userId);
 		}
 
 		/// <summary>
@@ -78,7 +78,7 @@ namespace VKMessenger.Protocol
 		/// </summary>
 		/// <param name="message">Сообщение для отправки</param>
 		/// <param name="userId">ID пользователя-получателя сообщения</param>
-		private Task EncryptAndSendMessageAsync(MessagesSendParams message, long userId)
+		private Task<long> EncryptAndSendMessageAsync(MessagesSendParams message, long userId)
 		{
 			return Task.Run(() =>
 			{
@@ -92,12 +92,14 @@ namespace VKMessenger.Protocol
 				}
 				textUserMessage.Encrypt(key, iv);
 				Utils.Extensions.BeginVkInvoke(Vk);
-				Vk.Messages.Send(new MessagesSendParams()
+				long id = Vk.Messages.Send(new MessagesSendParams()
 				{
 					PeerId = message.PeerId,
 					Message = textUserMessage.DataBase64
 				});
 				Utils.Extensions.EndVkInvoke();
+
+				return id;
 			});
 		}
 

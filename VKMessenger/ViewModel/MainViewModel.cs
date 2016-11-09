@@ -213,7 +213,7 @@ namespace VKMessenger.ViewModel
 		/// </summary>
         private async void SendMessageExecute()
         {
-			await _messenger.SendMessage(MessageText, SelectedDialog);
+			long id = await _messenger.SendMessage(MessageText, SelectedDialog);
 			MessageText = string.Empty;
 		}
 
