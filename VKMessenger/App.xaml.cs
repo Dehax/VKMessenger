@@ -40,7 +40,6 @@ namespace VKMessenger
 		{
 			ShutdownMode = ShutdownMode.OnExplicitShutdown;
 			AppDomain.CurrentDomain.UnhandledException += ProcessUnhandledException;
-			//DispatcherUnhandledException += ProcessUnhandledException;
 
 			ReloginCommand = new SimpleCommand(Relogin, () => { return true; });
 			SettingsCommand = new SimpleCommand(OpenSettings, () => { return true; });
@@ -117,16 +116,13 @@ namespace VKMessenger
 		/// </summary>
 		private void NewMessage(object sender, NewMessageEventArgs e)
 		{
-			if (e.Message.FromId != Messenger.User.Id)
-			{
-				string title = e.Dialog != null ? e.Dialog.Title : "Новый диалог";
-				string message = e.Message.Body;
+			string title = e.Message.Conversation != null ? e.Message.Conversation.Title : "Новая беседа";
+			string message = e.Message.Body;
 
-				Dispatcher.Invoke(() =>
-				{
-					_taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
-				});
-			}
+			Dispatcher.Invoke(() =>
+			{
+				_taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
+			});
 		}
 
 		/// <summary>

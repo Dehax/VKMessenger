@@ -24,7 +24,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <ListBox Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Name="dialogsListBox" Margin="5" ItemsSource="{Binding Dialogs}" SelectedIndex="{Binding SelectedDialogIndex}" HorizontalContentAlignment="Stretch">
+        <ListBox Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" x:Name="conversationsListBox" Margin="5" ItemsSource="{Binding Conversations}" SelectedIndex="{Binding SelectedConversationIndex}" HorizontalContentAlignment="Stretch">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type model:Conversation}">
                     <Border BorderBrush="Black">
@@ -53,7 +53,7 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <ListBox Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Name="messagesListBox" ItemsSource="{Binding Messages}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="5" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="False">
+        <ListBox Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" x:Name="messagesListBox" ItemsSource="{Binding SelectedConversation.Messages}" ScrollViewer.HorizontalScrollBarVisibility="Disabled" Margin="5" HorizontalContentAlignment="Stretch" ScrollViewer.CanContentScroll="False">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type model:VkMessage}">
                     <Border BorderBrush="Black">
@@ -80,7 +80,7 @@
             </ListBox.ItemTemplate>
         </ListBox>
 
-        <TextBox x:Uid="messageTextBox" Grid.Column="1" Grid.Row="1" x:Name="messageTextBox" Margin="5" Text="{Binding MessageText, UpdateSourceTrigger=PropertyChanged}" />
+        <TextBox x:Uid="messageTextBox" Grid.Column="1" Grid.Row="1" x:Name="messageTextBox" Margin="5" Text="{Binding SendingMessageText}" />
         <Button x:Uid="sendButton" Grid.Column="2" Grid.Row="1" x:Name="sendButton" Margin="5" Width="75" IsDefault="True" Command="{Binding SendMessageCommand}">Отправить</Button>
     </Grid>
 </Window>

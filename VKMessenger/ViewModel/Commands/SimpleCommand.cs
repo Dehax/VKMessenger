@@ -3,9 +3,18 @@ using System.Windows.Input;
 
 namespace VKMessenger.ViewModel.Commands
 {
+	/// <summary>
+	/// Команда WPF, поддерживающая пользовательское действие и пользовательское условие активности.
+	/// </summary>
 	public class SimpleCommand : ICommand
     {
+		/// <summary>
+		/// Пользовательское действие при выполнении команды.
+		/// </summary>
         private Action _targetExecuteAction;
+		/// <summary>
+		/// Пользовательское условие проверки активности команды.
+		/// </summary>
         private Func<bool> _targetCanExecuteMethod;
 
         public SimpleCommand(Action executeAction)

@@ -114,7 +114,7 @@
       <DependentUpon>AuthorizationWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Messenger.cs" />
-    <Compile Include="Model\Dialog.cs" />
+    <Compile Include="Model\Conversation.cs" />
     <Compile Include="Utils\Extensions.cs" />
     <Compile Include="View\SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>

@@ -110,6 +110,9 @@ namespace VKMessenger.Model
 
 		public VkMessage(Message message)
 		{
+			Id = message.Id;
+			OwnerId = message.OwnerId;
+
 			Action = message.Action;
 			ActionEmail = message.ActionEmail;
 			ActionMid = message.ActionMid;
@@ -151,7 +154,7 @@ namespace VKMessenger.Model
 		{
 			Conversation = conversation;
 			// TODO: Необходимо?
-			Conversation.Messages.Add(this);
+			//Conversation.Messages.Add(this);
 		}
 	}
 }

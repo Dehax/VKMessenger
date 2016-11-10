@@ -15,12 +15,10 @@ namespace VKMessenger.ViewModel
 {
 	public class NewMessageEventArgs : EventArgs
     {
-        public Conversation Dialog { get; set; }
         public VkMessage Message { get; set; }
 
-        public NewMessageEventArgs(Conversation dialog, VkMessage message)
+        public NewMessageEventArgs(VkMessage message)
         {
-            Dialog = dialog;
             Message = message;
         }
     }
@@ -30,7 +28,8 @@ namespace VKMessenger.ViewModel
 	/// </summary>
 	public class MainViewModel : INotifyPropertyChanged
     {
-        private Messenger _messenger;
+		#region Свойства
+		private Messenger _messenger;
 		public Messenger Messenger
 		{
 			get { return _messenger; }
@@ -41,91 +40,76 @@ namespace VKMessenger.ViewModel
 					_messenger = value;
 					_messenger.NewMessage += ReceiveNewMessage;
 					_messenger.MessageSent += NewMessageSent;
-					LoadDialogs();
+					LoadConversations();
 					OnPropertyChanged();
 				}
 			}
 		}
 
-		public VkApi Vk { get { return _messenger.Vk; } }
+		protected VkApi Vk { get { return _messenger.Vk; } }
 
-        private string _messageText;
+        private string _sendingMessageText;
 		/// <summary>
 		/// Текст нового сообщения для отправки.
 		/// </summary>
-        public string MessageText
+        public string SendingMessageText
         {
-            get { return _messageText; }
+            get { return _sendingMessageText; }
             set
             {
-                if (value != null && !value.Equals(_messageText))
+                if (value != null && !value.Equals(_sendingMessageText))
                 {
-                    _messageText = value;
+                    _sendingMessageText = value;
                     OnPropertyChanged();
                     SendMessageCommand.RaiseCanExecuteChanged();
                 }
             }
         }
 
-		private int _selectedDialogIndex = -1;
+		private int _selectedConversationIndex = -1;
 		/// <summary>
-		/// Индекс выбранного диалога в списке.
+		/// Индекс выбранной беседы в списке.
 		/// </summary>
-		public int SelectedDialogIndex
+		public int SelectedConversationIndex
 		{
-			get { return _selectedDialogIndex; }
+			get { return _selectedConversationIndex; }
 			set
 			{
-				if (_selectedDialogIndex != value)
+				if (_selectedConversationIndex != value)
 				{
-					_selectedDialogIndex = value;
-					OnDialogChanged();
+					_selectedConversationIndex = value;
+					OnSelectedConversationChanged();
 					OnPropertyChanged();
+					OnPropertyChanged(nameof(SelectedConversation));
 				}
 			}
 		}
 
-		private ObservableCollection<Conversation> _dialogs = new ObservableCollection<Conversation>();
+		private ObservableCollection<Conversation> _conversations = new ObservableCollection<Conversation>();
 		/// <summary>
-		/// Список диалогов пользователя.
+		/// Список бесед пользователя.
 		/// </summary>
 		public ObservableCollection<Conversation> Conversations
 		{
-			get { return _dialogs; }
+			get { return _conversations; }
 			set
 			{
-				if (_dialogs != value)
+				if (_conversations != value)
 				{
-					_dialogs = value;
+					_conversations = value;
 					OnPropertyChanged();
 				}
 			}
 		}
 
 		/// <summary>
-		/// Выбранный диалог.
+		/// Выбранная беседа.
 		/// </summary>
-		public Conversation SelectedDialog
+		public Conversation SelectedConversation
 		{
-			get { return SelectedDialogIndex >= 0 ? Conversations[SelectedDialogIndex] : null; }
+			get { return SelectedConversationIndex >= 0 ? Conversations[SelectedConversationIndex] : null; }
 		}
-
-		private ObservableCollection<VkMessage> _messages = new ObservableCollection<VkMessage>();
-		/// <summary>
-		/// Список сообщений выбранного диалога.
-		/// </summary>
-		public ObservableCollection<VkMessage> Messages
-		{
-			get { return _messages; }
-			set
-			{
-				if (_messages != value)
-				{
-					_messages = value;
-					OnPropertyChanged();
-				}
-			}
-		}
+		#endregion
 
 		#region Команды
 		/// <summary>
@@ -141,17 +125,19 @@ namespace VKMessenger.ViewModel
 		public event EventHandler<NewMessageEventArgs> NewMessage;
 		#endregion
 
+		#region MVVM
 		public event PropertyChangedEventHandler PropertyChanged;
-
-        public MainViewModel()
-        {
-            SendMessageCommand = new SimpleCommand(SendMessageExecute, CanSendMessage);
-        }
 
 		protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
+		#endregion
+
+		public MainViewModel()
+        {
+            SendMessageCommand = new SimpleCommand(SendMessageExecute, CanSendMessage);
+        }
 
 		/// <summary>
 		/// Обрабатывает новое сообщение.
@@ -159,34 +145,34 @@ namespace VKMessenger.ViewModel
 		private void ReceiveNewMessage(object sender, MessageEventArgs e)
         {
             VkMessage message = e.Message;
-            Conversation currentDialog = SelectedDialog;
+            Conversation currentConversation = SelectedConversation;
 
-            if (currentDialog != null
-                && ((currentDialog.IsChat && currentDialog.Chat.Id == message.ChatId)
-                || (!currentDialog.IsChat && currentDialog.User.Id == message.UserId.Value)))
+            if (currentConversation != null
+                && ((currentConversation.IsChat && currentConversation.Chat.Id == message.ChatId)
+                || (!currentConversation.IsChat && currentConversation.User.Id == message.UserId.Value)))
             {
-                message.Conversation = currentDialog;
+                message.Conversation = currentConversation;
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    currentDialog.Messages.Add(message);
+                    currentConversation.Messages.Add(message);
                 });
             }
 			
-            Conversation dialogForMessage = currentDialog;
+            Conversation conversationForMessage = currentConversation;
 
-			foreach (Conversation dialog in Conversations)
+			foreach (Conversation conversation in Conversations)
 			{
-				if ((dialog.IsChat && dialog.Chat.Id == message.ChatId)
-					|| (!dialog.IsChat && dialog.User.Id == message.UserId.Value))
+				if ((conversation.IsChat && conversation.Chat.Id == message.ChatId)
+					|| (!conversation.IsChat && conversation.User.Id == message.UserId.Value))
 				{
-					dialogForMessage = dialog;
-					message.Conversation = dialogForMessage;
+					conversationForMessage = conversation;
+					message.Conversation = conversationForMessage;
 					break;
 				}
 			}
 
-			OnNewMessage(dialogForMessage, message);
+			OnNewMessage(message);
         }
 
 		/// <summary>
@@ -201,11 +187,11 @@ namespace VKMessenger.ViewModel
 		/// <summary>
 		/// Вызывает событие получения нового сообщения.
 		/// </summary>
-		/// <param name="dialog">Диалог, сообщение которого было получено.</param>
+		/// <param name="conversation">Беседа, сообщение которой было получено.</param>
 		/// <param name="message">Сообщение, которое было получено.</param>
-        protected virtual void OnNewMessage(Conversation dialog, VkMessage message)
+        protected virtual void OnNewMessage(VkMessage message)
         {
-            NewMessage?.Invoke(this, new NewMessageEventArgs(dialog, message));
+            NewMessage?.Invoke(this, new NewMessageEventArgs(message));
         }
 
 		/// <summary>
@@ -213,8 +199,8 @@ namespace VKMessenger.ViewModel
 		/// </summary>
         private async void SendMessageExecute()
         {
-			long id = await _messenger.SendMessage(MessageText, SelectedDialog);
-			MessageText = string.Empty;
+			long id = await _messenger.SendMessage(SendingMessageText, SelectedConversation);
+			SendingMessageText = string.Empty;
 		}
 
 		/// <summary>
@@ -223,41 +209,49 @@ namespace VKMessenger.ViewModel
 		/// <returns></returns>
         private bool CanSendMessage()
         {
-            return !string.IsNullOrWhiteSpace(MessageText) && SelectedDialog != null;
+            return !string.IsNullOrWhiteSpace(SendingMessageText) && SelectedConversation != null;
         }
 
-		private async void LoadDialogs()
+		/// <summary>
+		/// Загружает беседы пользователя.
+		/// </summary>
+		private async void LoadConversations()
 		{
-			ReadOnlyCollection<Message> dialogMessages = await GetDialogsList();
+			ReadOnlyCollection<Message> conversationsMessages = await GetConversationsList();
 
-			for (int i = 0; i < dialogMessages.Count; i++)
+			for (int i = 0; i < conversationsMessages.Count; i++)
 			{
-				Message lastMessage = dialogMessages[i];
+				Message lastMessage = conversationsMessages[i];
 
 				if (lastMessage.UserId < 0)
 				{
 					continue;
 				}
 
-				Conversation dialog = new Conversation();
-				VkMessage message = new VkMessage(lastMessage, dialog);
+				Conversation conversation = new Conversation();
+				VkMessage message = new VkMessage(lastMessage, conversation);
 
 				if (lastMessage.ChatId.HasValue)
 				{
-					dialog.Photo = lastMessage.Photo50;
-					dialog.Chat = await LoadChat(lastMessage.ChatId.Value);
-					dialog.Users = await LoadUsers(dialog.Chat.Users);
+					conversation.Photo = lastMessage.Photo50;
+					conversation.Chat = await LoadChat(lastMessage.ChatId.Value);
+					conversation.Users = await LoadUsers(conversation.Chat.Users);
 				}
 				else
 				{
-					dialog.User = await LoadUser(lastMessage.UserId.Value);
+					conversation.User = await LoadUser(lastMessage.UserId.Value);
 				}
 
 
-				Conversations.Add(dialog);
+				Conversations.Add(conversation);
 			}
 		}
 
+		/// <summary>
+		/// Загружает информацию об указанных пользователях.
+		/// </summary>
+		/// <param name="usersIds">Список ID пользователей для загрузки.</param>
+		/// <returns>Список пользователей.</returns>
 		private Task<List<User>> LoadUsers(Collection<long> usersIds)
 		{
 			return Task.Run(() =>
@@ -274,6 +268,11 @@ namespace VKMessenger.ViewModel
 			});
 		}
 
+		/// <summary>
+		/// Загружает информацию об одном пользователе.
+		/// </summary>
+		/// <param name="userId">ID пользователя.</param>
+		/// <returns>Пользователь.</returns>
 		private Task<User> LoadUser(long userId)
 		{
 			return Task.Run(() =>
@@ -286,6 +285,11 @@ namespace VKMessenger.ViewModel
 			});
 		}
 
+		/// <summary>
+		/// Загружает информацию о чате.
+		/// </summary>
+		/// <param name="chatId">ID чата.</param>
+		/// <returns>Чат.</returns>
 		private Task<Chat> LoadChat(long chatId)
 		{
 			return Task.Run(() =>
@@ -298,7 +302,11 @@ namespace VKMessenger.ViewModel
 			});
 		}
 
-		private Task<ReadOnlyCollection<Message>> GetDialogsList()
+		/// <summary>
+		/// Загружает список бесед пользователя.
+		/// </summary>
+		/// <returns>Список бесед.</returns>
+		private Task<ReadOnlyCollection<Message>> GetConversationsList()
 		{
 			return Task.Run(() =>
 			{
@@ -337,23 +345,20 @@ namespace VKMessenger.ViewModel
 			});
 		}
 
-		public void SetData(IEnumerable<Message> messages, Conversation dialog)
+		/// <summary>
+		/// Происходит при изменении выбора беседы.
+		/// </summary>
+		protected virtual async void OnSelectedConversationChanged()
 		{
-			_messages.Clear();
+			long peerId = SelectedConversation.PeerId;
+			List<Message> messages = await LoadHistory(peerId);
+			
+			SelectedConversation.Messages.Clear();
 
 			foreach (Message message in messages)
 			{
-				_messages.Insert(0, new VkMessage(message, dialog));
+				SelectedConversation.Messages.Insert(0, new VkMessage(message, SelectedConversation));
 			}
-		}
-
-		protected virtual async void OnDialogChanged()
-		{
-			long peerId = SelectedDialog.PeerId;
-			List<Message> messages = await LoadHistory(peerId);
-
-			SetData(messages, SelectedDialog);
-			SelectedDialog.Messages = Messages;
 		}
 
 		private Task<List<Message>> LoadHistory(long peerId)

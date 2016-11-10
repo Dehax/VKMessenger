@@ -131,14 +131,7 @@ namespace VKMessenger.Protocol
 						Flags = CspProviderFlags.CreateEphemeralKey
 					};
 					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
-					//rsa.PersistKeyInCsp = false;
-					//rsa.Clear();
-					//csp.Flags = CspProviderFlags.UseMachineKeyStore;
-					//csp.Flags = CspProviderFlags.UseDefaultKeyContainer;
-					//rsa = new RSACryptoServiceProvider(2048, csp);
 					rsa.ImportCspBlob(responseKeyMessage.RSAPublicKey);
-					//RSAParameters r = rsa.ExportParameters(false);
-					//string rs = rsa.ToXmlString(false);
 					SavePublicKey(rsa);
 
 					_handshakeEvents[userId].Set();
@@ -231,8 +224,6 @@ namespace VKMessenger.Protocol
 			try
 			{
 				rsa = new RSACryptoServiceProvider(2048, csp);
-				//RSAParameters r = rsa.ExportParameters(true);
-				//string rs = rsa.ToXmlString(true);
 			}
 			catch (Exception)
 			{

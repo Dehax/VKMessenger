@@ -9,6 +9,7 @@ using VKMessenger.Model;
 using VKMessenger.Protocol;
 using VKMessenger.Protocol.Messages;
 using VkNet;
+using VkNet.Enums;
 using VkNet.Enums.Filters;
 using VkNet.Model;
 using VkNet.Model.RequestParams;
@@ -60,11 +61,11 @@ namespace VKMessenger
 		}
 
 		/// <summary>
-		/// Отправить сообщение в указанный диалог.
+		/// Отправить сообщение в указанную беседу.
 		/// </summary>
 		/// <param name="message">Текст сообщения для отправки.</param>
-		/// <param name="dialog">Диалог, в который будет отправлено сообщение.</param>
-		public async Task<long> SendMessage(string message, Conversation dialog)
+		/// <param name="conversation">Беседа, в которую будет отправлено сообщение.</param>
+		public async Task<long> SendMessage(string message, Conversation conversation)
 		{
 			Task<long> sendMessageTask;
 
@@ -74,7 +75,7 @@ namespace VKMessenger
 				{
 					return _dvProto.SendMessageAsync(new MessagesSendParams()
 					{
-						PeerId = dialog.PeerId,
+						PeerId = conversation.PeerId,
 						Message = message
 					});
 				});
@@ -86,7 +87,7 @@ namespace VKMessenger
 					Utils.Extensions.BeginVkInvoke(Vk);
 					long id = Vk.Messages.Send(new MessagesSendParams()
 					{
-						PeerId = dialog.PeerId,
+						PeerId = conversation.PeerId,
 						Message = message
 					});
 					Utils.Extensions.EndVkInvoke();
@@ -97,9 +98,12 @@ namespace VKMessenger
 
 			long messageId = await sendMessageTask;
 
-			Message msg = await LoadMessageAsync(messageId);
-
-			MessageSent?.Invoke(this, new MessageEventArgs(new VkMessage(msg, dialog)));
+			if (IsEncryptionEnabled)
+			{
+				Message msg = await LoadMessageAsync(messageId);
+				msg.Body = message;
+				OnMessageSent(new VkMessage(msg, conversation));
+			}
 
 			return messageId;
 		}
@@ -180,7 +184,7 @@ namespace VKMessenger
 
 									VkMessage message = new VkMessage(await LoadMessageAsync((long)messageId));
 
-									message.FromId = ((flags & 2) == 0) ? message.UserId : Vk.UserId;
+									message.FromId = (message.Type == MessageType.Received) ? message.UserId : Vk.UserId;
 
 									message.Author = await Task.Run(() =>
 									{
@@ -191,15 +195,19 @@ namespace VKMessenger
 										return user;
 									});
 
-									if ((flags & 2) == 0)
+									switch (message.Type.Value)
 									{
+									case MessageType.Received:
 										// Новое сообщение
 										OnNewMessage(message);
-									}
-									else
-									{
-										// Успешно отправлено сообщение
-										OnMessageSent(message);
+										break;
+									case MessageType.Sended:
+										if (!IsEncryptionEnabled)
+										{
+											// Успешно отправлено сообщение
+											OnMessageSent(message);
+										}
+										break;
 									}
 								}
 								break;
@@ -226,8 +234,8 @@ namespace VKMessenger
 		/// <summary>
 		/// Выполнить авторизацию с использованием маркера доступа <paramref name="accessToken"/>.
 		/// </summary>
-		/// <param name="accessToken">Маркер доступа к VK API</param>
-		/// <returns>true при успешной авторизации</returns>
+		/// <param name="accessToken">Маркер доступа к VK API.</param>
+		/// <returns>true при успешной авторизации.</returns>
 		public bool Authorize(string accessToken)
 		{
 			Utils.Extensions.BeginVkInvoke(Vk);
@@ -247,7 +255,7 @@ namespace VKMessenger
 		/// <summary>
 		/// Получено новое сообщение.
 		/// </summary>
-		/// <param name="message"></param>
+		/// <param name="message">Сообщение.</param>
 		protected virtual void OnNewMessage(VkMessage message)
 		{
 			if (IsEncryptionEnabled)
@@ -275,7 +283,7 @@ namespace VKMessenger
 		/// <summary>
 		/// Отправлено новое сообщение.
 		/// </summary>
-		/// <param name="message">Отправленное сообщение</param>
+		/// <param name="message">Отправленное сообщение.</param>
 		protected virtual void OnMessageSent(VkMessage message)
 		{
 			MessageSent?.Invoke(this, new MessageEventArgs(message));
