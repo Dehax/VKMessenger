@@ -149,7 +149,7 @@ namespace VKMessenger.ViewModel
 		/// <summary>
 		/// Обрабатывает новое сообщение.
 		/// </summary>
-		private void ProcessNewMessage(object sender, MessageEventArgs e)
+		private async void ProcessNewMessage(object sender, MessageEventArgs e)
 		{
 			VkMessage message = e.Message;
 			Conversation currentConversation = SelectedConversation;
@@ -166,6 +166,11 @@ namespace VKMessenger.ViewModel
 				{
 					currentConversation.Messages.Add(message);
 				});
+
+				if (message.Type == MessageType.Received)
+				{
+					await MarkMessagesAsRead(new long[] { message.Id.Value });
+				}
 			}
 
 			// Выбран другой диалог
@@ -383,16 +388,22 @@ namespace VKMessenger.ViewModel
 		/// </summary>
 		protected virtual async void OnSelectedConversationChanged()
 		{
-			long peerId = SelectedConversation.PeerId;
-			List<Message> messages = await LoadHistory(peerId);
 			List<long> unreadedMessagesIds = new List<long>();
 
-			SelectedConversation.Messages.Clear();
-
-			foreach (Message message in messages)
+			if (SelectedConversation.Messages.Count == 0)
 			{
-				SelectedConversation.Messages.Insert(0, new VkMessage(message, SelectedConversation));
+				// Первый выбор беседы, загрузить сообщения
+				long peerId = SelectedConversation.PeerId;
+				List<Message> messages = await LoadHistory(peerId);
 
+				foreach (Message message in messages)
+				{
+					SelectedConversation.Messages.Insert(0, new VkMessage(message, SelectedConversation));
+				}
+			}
+
+			foreach (VkMessage message in SelectedConversation.Messages)
+			{
 				if (message.ReadState == MessageReadState.Unreaded)
 				{
 					unreadedMessagesIds.Add(message.Id.Value);
@@ -400,11 +411,18 @@ namespace VKMessenger.ViewModel
 			}
 
 			// Пометить сообщения прочитанными
-			await Task.Run(() =>
+			await MarkMessagesAsRead(unreadedMessagesIds);
+		}
+
+		private Task<bool> MarkMessagesAsRead(IEnumerable<long> unreadedMessagesIds)
+		{
+			return Task.Run(() =>
 			{
 				Utils.Extensions.BeginVkInvoke(Vk);
-				Vk.Messages.MarkAsRead(unreadedMessagesIds, SelectedConversation.PeerId.ToString());
+				bool result = Vk.Messages.MarkAsRead(unreadedMessagesIds, SelectedConversation.PeerId.ToString());
 				Utils.Extensions.EndVkInvoke();
+
+				return result;
 			});
 		}
 
