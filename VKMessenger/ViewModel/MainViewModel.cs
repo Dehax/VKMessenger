@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using VKMessenger.Model;
 using VKMessenger.ViewModel.Commands;
 using VkNet;
+using VkNet.Enums;
 using VkNet.Enums.Filters;
 using VkNet.Model;
 using VkNet.Model.RequestParams;
@@ -38,8 +39,9 @@ namespace VKMessenger.ViewModel
 				if (_messenger != value)
 				{
 					_messenger = value;
-					_messenger.NewMessage += ReceiveNewMessage;
-					_messenger.MessageSent += NewMessageSent;
+					_messenger.NewMessage += ProcessNewMessage;
+					_messenger.MessageSent += ProcessNewMessage;
+					_messenger.MessageRead += MessageRead;
 					LoadConversations();
 					OnPropertyChanged();
 				}
@@ -81,6 +83,7 @@ namespace VKMessenger.ViewModel
 					OnSelectedConversationChanged();
 					OnPropertyChanged();
 					OnPropertyChanged(nameof(SelectedConversation));
+					SendMessageCommand.RaiseCanExecuteChanged();
 				}
 			}
 		}
@@ -120,9 +123,13 @@ namespace VKMessenger.ViewModel
 
 		#region События
 		/// <summary>
-		/// Вызывается при получении нового сообщения.
+		/// Происходит при получении нового сообщения.
 		/// </summary>
 		public event EventHandler<NewMessageEventArgs> NewMessage;
+		/// <summary>
+		/// Происходит при отправке сообщения.
+		/// </summary>
+		public event EventHandler<NewMessageEventArgs> MessageSent;
 		#endregion
 
 		#region MVVM
@@ -142,27 +149,32 @@ namespace VKMessenger.ViewModel
 		/// <summary>
 		/// Обрабатывает новое сообщение.
 		/// </summary>
-		private void ReceiveNewMessage(object sender, MessageEventArgs e)
+		private void ProcessNewMessage(object sender, MessageEventArgs e)
         {
             VkMessage message = e.Message;
             Conversation currentConversation = SelectedConversation;
 
+			// Если выбрана беседа и сообщение относится к выбранной беседе
             if (currentConversation != null
                 && ((currentConversation.IsChat && currentConversation.Chat.Id == message.ChatId)
                 || (!currentConversation.IsChat && currentConversation.User.Id == message.UserId.Value)))
             {
                 message.Conversation = currentConversation;
 
+				// Добавляем новое сообщение в беседу
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
                     currentConversation.Messages.Add(message);
                 });
             }
 			
+			// Выбран другой диалог
+			
             Conversation conversationForMessage = currentConversation;
 
 			foreach (Conversation conversation in Conversations)
 			{
+				// Сообщение относится к данной беседе
 				if ((conversation.IsChat && conversation.Chat.Id == message.ChatId)
 					|| (!conversation.IsChat && conversation.User.Id == message.UserId.Value))
 				{
@@ -172,27 +184,48 @@ namespace VKMessenger.ViewModel
 				}
 			}
 
-			OnNewMessage(message);
+			if (message.Type == MessageType.Received)
+			{
+				OnNewMessage(message);
+			}
+			else
+			{
+				OnMessageSent(message);
+			}
         }
 
-		/// <summary>
-		/// Обрабатывает отправленное сообщение.
-		/// </summary>
-		private void NewMessageSent(object sender, MessageEventArgs e)
+		private void MessageRead(object sender, MessageReadEventArgs e)
 		{
-			// TODO: Check this out.
-			ReceiveNewMessage(sender, e);
+			foreach (Conversation conversation in Conversations)
+			{
+				foreach (VkMessage message in conversation.Messages)
+				{
+					if (message.Id == e.MessageId)
+					{
+						message.ReadState = MessageReadState.Readed;
+						return;
+					}
+				}
+			}
 		}
 
 		/// <summary>
-		/// Вызывает событие получения нового сообщения.
+		/// Происходит при получении нового сообщения.
 		/// </summary>
-		/// <param name="conversation">Беседа, сообщение которой было получено.</param>
 		/// <param name="message">Сообщение, которое было получено.</param>
-        protected virtual void OnNewMessage(VkMessage message)
+		protected virtual void OnNewMessage(VkMessage message)
         {
             NewMessage?.Invoke(this, new NewMessageEventArgs(message));
         }
+
+		/// <summary>
+		/// Происходит при отправке нового сообщения.
+		/// </summary>
+		/// <param name="message">Сообщение, которое было отправлено.</param>
+		protected virtual void OnMessageSent(VkMessage message)
+		{
+			MessageSent?.Invoke(this, new NewMessageEventArgs(message));
+		}
 
 		/// <summary>
 		/// Отправляет новое сообщение.

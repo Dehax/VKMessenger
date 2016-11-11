@@ -22,14 +22,15 @@ namespace VKMessenger.View
 				throw new NotSupportedException("Не поддерживается ViewModel, отличный от MainViewModel");
 			}
 
-            _viewModel.NewMessage += ReceiveNewMessage;
+            _viewModel.NewMessage += ScrollToLastMessage;
+			_viewModel.MessageSent += ScrollToLastMessage;
             
             StateChanged += MainWindow_StateChanged;
         }
 
-		private void ReceiveNewMessage(object sender, NewMessageEventArgs e)
+		private void ScrollToLastMessage(object sender, NewMessageEventArgs e)
         {
-            if (e.Conversation == _viewModel.SelectedConversation)
+            if (e.Message.Conversation == _viewModel.SelectedConversation)
             {
                 Dispatcher.Invoke(() =>
                 {

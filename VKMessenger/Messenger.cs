@@ -26,6 +26,16 @@ namespace VKMessenger
 		}
 	}
 
+	public class MessageReadEventArgs : EventArgs
+	{
+		public long MessageId { get; set; }
+
+		public MessageReadEventArgs(long messageId)
+		{
+			MessageId = messageId;
+		}
+	}
+
 	/// <summary>
 	/// Мессенджер ВКонтакте. Поддерживает End-to-End (сквозное) шифрование.
 	/// </summary>
@@ -44,6 +54,10 @@ namespace VKMessenger
 		/// Происходит при успешном отправлении нового сообщения.
 		/// </summary>
 		public event EventHandler<MessageEventArgs> MessageSent;
+		/// <summary>
+		/// Происходит при прочтении сообщения.
+		/// </summary>
+		public event EventHandler<MessageReadEventArgs> MessageRead;
 
 		private bool _cancelRequest = false;
 		private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -176,13 +190,26 @@ namespace VKMessenger
 
 							switch (eventType)
 							{
+							case 3:
+								{
+									// Сброс флагов сообщения
+									long messageId = (long)eventArray[1];
+									long mask = (long)eventArray[2];
+
+									// Сообщение прочитано
+									if ((mask & 1) > 0)
+									{
+										OnMessageRead(messageId);
+									}
+								}
+								break;
 							case 4:
 								{
 									// Новое сообщение
-									ulong messageId = (ulong)eventArray[1];
-									ulong flags = (ulong)eventArray[2];
+									long messageId = (long)eventArray[1];
+									long flags = (long)eventArray[2];
 
-									VkMessage message = new VkMessage(await LoadMessageAsync((long)messageId));
+									VkMessage message = new VkMessage(await LoadMessageAsync(messageId));
 
 									message.FromId = (message.Type == MessageType.Received) ? message.UserId : Vk.UserId;
 
@@ -287,6 +314,15 @@ namespace VKMessenger
 		protected virtual void OnMessageSent(VkMessage message)
 		{
 			MessageSent?.Invoke(this, new MessageEventArgs(message));
+		}
+
+		/// <summary>
+		/// Сообщение было прочитано.
+		/// </summary>
+		/// <param name="messageId">ID прочитанного сообщения.</param>
+		private void OnMessageRead(long messageId)
+		{
+			MessageRead?.Invoke(this, new MessageReadEventArgs(messageId));
 		}
 
 		/// <summary>

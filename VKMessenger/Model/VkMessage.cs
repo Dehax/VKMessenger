@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using VkNet.Enums;
 using VkNet.Model;
 
 namespace VKMessenger.Model
@@ -8,22 +9,22 @@ namespace VKMessenger.Model
 	/// Сообщение.
 	/// </summary>
 	public class VkMessage : Message, INotifyPropertyChanged
-    {
+	{
 		/// <summary>
 		/// Беседа.
 		/// </summary>
-        public Conversation Conversation { get; set; }
+		public Conversation Conversation { get; set; }
 		/// <summary>
 		/// Автор сообщения.
 		/// </summary>
-        public User Author { get; set; }
+		public User Author { get; set; }
 		/// <summary>
 		/// Время сообщения.
 		/// </summary>
-        public string TimePrint
-        {
-            get { return Date?.ToString("dd.MM.yyyy HH:mm:ss"); }
-        }
+		public string TimePrint
+		{
+			get { return Date?.ToString("dd.MM.yyyy HH:mm:ss"); }
+		}
 
 		/// <summary>
 		/// Фамилия Имя автора сообщения.
@@ -65,39 +66,52 @@ namespace VKMessenger.Model
 		/// URL аватара беседы.
 		/// </summary>
 		public string Image
-        {
-            get
-            {
-                if (Conversation.IsChat)
-                {
-                    string image = Conversation.Photo;
+		{
+			get
+			{
+				if (Conversation.IsChat)
+				{
+					string image = Conversation.Photo;
 
-                    foreach (User user in Conversation.Users)
-                    {
-                        if (FromId == user.Id)
-                        {
-                            image = user.Photo50.AbsoluteUri;
-                            break;
-                        }
-                    }
+					foreach (User user in Conversation.Users)
+					{
+						if (FromId == user.Id)
+						{
+							image = user.Photo50.AbsoluteUri;
+							break;
+						}
+					}
 
-                    return image;
-                }
-                else
-                {
-                    if (FromId == Conversation.User.Id)
-                    {
-                        return Conversation.User.Photo50.AbsoluteUri;
-                    }
-                    else
-                    {
-                        return Messenger.User.Photo50.AbsoluteUri;
-                    }
-                }
-            }
-        }
+					return image;
+				}
+				else
+				{
+					if (FromId == Conversation.User.Id)
+					{
+						return Conversation.User.Photo50.AbsoluteUri;
+					}
+					else
+					{
+						return Messenger.User.Photo50.AbsoluteUri;
+					}
+				}
+			}
+		}
 
-        public event PropertyChangedEventHandler PropertyChanged;
+		public new MessageReadState? ReadState
+		{
+			get
+			{
+				return base.ReadState;
+			}
+			set
+			{
+				base.ReadState = value;
+				OnPropertyChanged();
+			}
+		}
+
+		public event PropertyChangedEventHandler PropertyChanged;
 
 		protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
 		{
@@ -105,8 +119,8 @@ namespace VKMessenger.Model
 		}
 
 		public VkMessage()
-        {
-        }
+		{
+		}
 
 		public VkMessage(Message message)
 		{
