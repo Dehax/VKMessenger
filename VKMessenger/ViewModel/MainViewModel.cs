@@ -15,20 +15,20 @@ using VkNet.Model.RequestParams;
 namespace VKMessenger.ViewModel
 {
 	public class NewMessageEventArgs : EventArgs
-    {
-        public VkMessage Message { get; set; }
+	{
+		public VkMessage Message { get; set; }
 
-        public NewMessageEventArgs(VkMessage message)
-        {
-            Message = message;
-        }
-    }
+		public NewMessageEventArgs(VkMessage message)
+		{
+			Message = message;
+		}
+	}
 
 	/// <summary>
 	/// Бизнес-логика основного окна мессенджера.
 	/// </summary>
 	public class MainViewModel : INotifyPropertyChanged
-    {
+	{
 		#region Свойства
 		private Messenger _messenger;
 		public Messenger Messenger
@@ -50,23 +50,23 @@ namespace VKMessenger.ViewModel
 
 		protected VkApi Vk { get { return _messenger.Vk; } }
 
-        private string _sendingMessageText;
+		private string _sendingMessageText;
 		/// <summary>
 		/// Текст нового сообщения для отправки.
 		/// </summary>
-        public string SendingMessageText
-        {
-            get { return _sendingMessageText; }
-            set
-            {
-                if (value != null && !value.Equals(_sendingMessageText))
-                {
-                    _sendingMessageText = value;
-                    OnPropertyChanged();
-                    SendMessageCommand.RaiseCanExecuteChanged();
-                }
-            }
-        }
+		public string SendingMessageText
+		{
+			get { return _sendingMessageText; }
+			set
+			{
+				if (value != null && !value.Equals(_sendingMessageText))
+				{
+					_sendingMessageText = value;
+					OnPropertyChanged();
+					SendMessageCommand.RaiseCanExecuteChanged();
+				}
+			}
+		}
 
 		private int _selectedConversationIndex = -1;
 		/// <summary>
@@ -142,35 +142,35 @@ namespace VKMessenger.ViewModel
 		#endregion
 
 		public MainViewModel()
-        {
-            SendMessageCommand = new SimpleCommand(SendMessageExecute, CanSendMessage);
-        }
+		{
+			SendMessageCommand = new SimpleCommand(SendMessageExecute, CanSendMessage);
+		}
 
 		/// <summary>
 		/// Обрабатывает новое сообщение.
 		/// </summary>
 		private void ProcessNewMessage(object sender, MessageEventArgs e)
-        {
-            VkMessage message = e.Message;
-            Conversation currentConversation = SelectedConversation;
+		{
+			VkMessage message = e.Message;
+			Conversation currentConversation = SelectedConversation;
 
 			// Если выбрана беседа и сообщение относится к выбранной беседе
-            if (currentConversation != null
-                && ((currentConversation.IsChat && currentConversation.Chat.Id == message.ChatId)
-                || (!currentConversation.IsChat && currentConversation.User.Id == message.UserId.Value)))
-            {
-                message.Conversation = currentConversation;
+			if (currentConversation != null
+				&& ((currentConversation.IsChat && currentConversation.Chat.Id == message.ChatId)
+				|| (!currentConversation.IsChat && currentConversation.User.Id == message.UserId.Value)))
+			{
+				message.Conversation = currentConversation;
 
 				// Добавляем новое сообщение в беседу
-                System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                {
-                    currentConversation.Messages.Add(message);
-                });
-            }
-			
+				System.Windows.Application.Current.Dispatcher.Invoke(() =>
+				{
+					currentConversation.Messages.Add(message);
+				});
+			}
+
 			// Выбран другой диалог
-			
-            Conversation conversationForMessage = currentConversation;
+
+			Conversation conversationForMessage = currentConversation;
 
 			foreach (Conversation conversation in Conversations)
 			{
@@ -192,7 +192,7 @@ namespace VKMessenger.ViewModel
 			{
 				OnMessageSent(message);
 			}
-        }
+		}
 
 		private void MessageRead(object sender, MessageReadEventArgs e)
 		{
@@ -214,9 +214,9 @@ namespace VKMessenger.ViewModel
 		/// </summary>
 		/// <param name="message">Сообщение, которое было получено.</param>
 		protected virtual void OnNewMessage(VkMessage message)
-        {
-            NewMessage?.Invoke(this, new NewMessageEventArgs(message));
-        }
+		{
+			NewMessage?.Invoke(this, new NewMessageEventArgs(message));
+		}
 
 		/// <summary>
 		/// Происходит при отправке нового сообщения.
@@ -230,8 +230,8 @@ namespace VKMessenger.ViewModel
 		/// <summary>
 		/// Отправляет новое сообщение.
 		/// </summary>
-        private async void SendMessageExecute()
-        {
+		private async void SendMessageExecute()
+		{
 			long id = await _messenger.SendMessage(SendingMessageText, SelectedConversation);
 			SendingMessageText = string.Empty;
 		}
@@ -240,10 +240,10 @@ namespace VKMessenger.ViewModel
 		/// Проверяет возможность отправки сообщения.
 		/// </summary>
 		/// <returns></returns>
-        private bool CanSendMessage()
-        {
-            return !string.IsNullOrWhiteSpace(SendingMessageText) && SelectedConversation != null;
-        }
+		private bool CanSendMessage()
+		{
+			return !string.IsNullOrWhiteSpace(SendingMessageText) && SelectedConversation != null;
+		}
 
 		/// <summary>
 		/// Загружает беседы пользователя.
@@ -385,13 +385,27 @@ namespace VKMessenger.ViewModel
 		{
 			long peerId = SelectedConversation.PeerId;
 			List<Message> messages = await LoadHistory(peerId);
-			
+			List<long> unreadedMessagesIds = new List<long>();
+
 			SelectedConversation.Messages.Clear();
 
 			foreach (Message message in messages)
 			{
 				SelectedConversation.Messages.Insert(0, new VkMessage(message, SelectedConversation));
+
+				if (message.ReadState == MessageReadState.Unreaded)
+				{
+					unreadedMessagesIds.Add(message.Id.Value);
+				}
 			}
+
+			// Пометить сообщения прочитанными
+			await Task.Run(() =>
+			{
+				Utils.Extensions.BeginVkInvoke(Vk);
+				Vk.Messages.MarkAsRead(unreadedMessagesIds, SelectedConversation.PeerId.ToString());
+				Utils.Extensions.EndVkInvoke();
+			});
 		}
 
 		private Task<List<Message>> LoadHistory(long peerId)
