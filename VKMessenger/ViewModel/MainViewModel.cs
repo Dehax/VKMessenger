@@ -130,6 +130,10 @@ namespace VKMessenger.ViewModel
 		/// Происходит при отправке сообщения.
 		/// </summary>
 		public event EventHandler<NewMessageEventArgs> MessageSent;
+		/// <summary>
+		/// Происходит при ошибке отправки сообщения.
+		/// </summary>
+		public event EventHandler ErrorSendMessage;
 		#endregion
 
 		#region MVVM
@@ -233,12 +237,28 @@ namespace VKMessenger.ViewModel
 		}
 
 		/// <summary>
+		/// Происходит при ошибке отправки нового сообщения.
+		/// </summary>
+		protected virtual void OnErrorSendMessage()
+		{
+			ErrorSendMessage?.Invoke(this, EventArgs.Empty);
+		}
+
+		/// <summary>
 		/// Отправляет новое сообщение.
 		/// </summary>
 		private async void SendMessageExecute()
 		{
 			long id = await _messenger.SendMessage(SendingMessageText, SelectedConversation);
-			SendingMessageText = string.Empty;
+			
+			if (id >= 0)
+			{
+				SendingMessageText = string.Empty;
+			}
+			else
+			{
+				OnErrorSendMessage();
+			}
 		}
 
 		/// <summary>

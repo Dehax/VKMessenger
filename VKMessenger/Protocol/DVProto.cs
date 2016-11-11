@@ -20,6 +20,7 @@ namespace VKMessenger.Protocol
 	{
 		private const int ENCRYPTION_KEY_SIZE = 32;
 		private const int ENCRYPTION_IV_SIZE = 4;
+		private const int TIMEOUT = 60 * 1000;
 
 		private VkApi _vk;
 		public VkApi Vk { get { return _vk; } }
@@ -40,16 +41,19 @@ namespace VKMessenger.Protocol
 		{
 			long userId = message.PeerId.Value;
 
-			if (TryGetRSAKey(userId, false) == null)
+			_handshakeEvents.Add(userId, new AutoResetEvent(false));
+
+			await ApplyForPublicKeyAsync(message.PeerId.Value);
+
+			if (!_handshakeEvents[userId].WaitOne(TIMEOUT))
 			{
-				_handshakeEvents.Add(userId, new AutoResetEvent(false));
-
-				await ApplyForPublicKeyAsync(message.PeerId.Value);
-
-				_handshakeEvents[userId].WaitOne();
-
+				// Не дождались ответа, возвращаем ошибку
 				_handshakeEvents.Remove(userId);
+
+				return -1;
 			}
+
+			_handshakeEvents.Remove(userId);
 
 			return await EncryptAndSendMessageAsync(message, userId);
 		}
@@ -88,8 +92,9 @@ namespace VKMessenger.Protocol
 				using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
 				{
 					rng.GetBytes(key);
-					rng.GetBytes(iv);
+					//rng.GetBytes(iv);
 				}
+				Buffer.BlockCopy(key, 0, iv, 0, iv.Length);
 				textUserMessage.Encrypt(key, iv);
 				Utils.Extensions.BeginVkInvoke(Vk);
 				long id = Vk.Messages.Send(new MessagesSendParams()
@@ -183,9 +188,9 @@ namespace VKMessenger.Protocol
 				KeyContainerName = nameof(VKMessenger) + "_from_" + Convert.ToString(userId)
 			};
 			RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
-			rsa.PersistKeyInCsp = false;
-			rsa.Clear();
-			rsa = new RSACryptoServiceProvider(2048, csp);
+			//rsa.PersistKeyInCsp = false;
+			//rsa.Clear();
+			//rsa = new RSACryptoServiceProvider(2048, csp);
 			//RSAParameters r = rsa.ExportParameters(true);
 			//string rs = rsa.ToXmlString(true);
 			ResponseKeyMessage responseKeyMessage = new ResponseKeyMessage(rsa.ExportCspBlob(false));

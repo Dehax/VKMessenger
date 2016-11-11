@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -38,7 +39,10 @@ namespace VKMessenger.Protocol.Messages
 	/// </summary>
 	public abstract class ServiceMessage
 	{
+		protected const int SEED_SIZE = 3;
+
 		public const string HEADER = "=== VKMessenger ===\n";
+		private readonly byte[] SEED = new byte[SEED_SIZE];
 
 		private byte[] _data = new byte[0];
 		/// <summary>
@@ -61,7 +65,7 @@ namespace VKMessenger.Protocol.Messages
 				resultData[0] = (byte)Type;
 				Buffer.BlockCopy(Data, 0, resultData, 1, Data.Length);
 
-				return $"{HEADER}{Convert.ToBase64String(resultData)}";
+				return $"{HEADER}{Convert.ToBase64String(SEED)}\n{Convert.ToBase64String(resultData)}";
 			}
 		}
 
@@ -80,6 +84,10 @@ namespace VKMessenger.Protocol.Messages
 		/// </summary>
 		public ServiceMessage()
 		{
+			using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+			{
+				rng.GetBytes(SEED);
+			}
 		}
 
 		/// <summary>
@@ -93,9 +101,12 @@ namespace VKMessenger.Protocol.Messages
 				throw new ArgumentException("Сообщение не является служебным", nameof(messageBase64));
 			}
 
-			string encodedBase64 = messageBase64.Substring(HEADER.Length);
+			string seedBase64 = messageBase64.Substring(HEADER.Length, SEED_SIZE * 4 / 3);
+			SEED = Convert.FromBase64String(seedBase64);
+			string encodedBase64 = messageBase64.Substring(HEADER.Length + seedBase64.Length + 1);
 			byte[] messageData = Convert.FromBase64String(encodedBase64);
 			Data = new byte[messageData.Length - 1];
+			Type = (ServiceMessageType)Data[0];
 			Buffer.BlockCopy(messageData, 1, Data, 0, Data.Length);
 		}
 
@@ -111,7 +122,9 @@ namespace VKMessenger.Protocol.Messages
 				return ServiceMessageType.None;
 			}
 
-			string encodedBase64 = messageBase64.Substring(HEADER.Length);
+			string seedBase64 = messageBase64.Substring(HEADER.Length, SEED_SIZE * 4 / 3);
+			byte[] seed = Convert.FromBase64String(seedBase64);
+			string encodedBase64 = messageBase64.Substring(HEADER.Length + seedBase64.Length + 1);
 			byte[] data = Convert.FromBase64String(encodedBase64);
 			byte code = data[0];
 

@@ -24,9 +24,15 @@ namespace VKMessenger.View
 
             _viewModel.NewMessage += ScrollToLastMessage;
 			_viewModel.MessageSent += ScrollToLastMessage;
+			_viewModel.ErrorSendMessage += ErrorSendMessage;
             
             StateChanged += MainWindow_StateChanged;
         }
+
+		private void ErrorSendMessage(object sender, EventArgs e)
+		{
+			MessageBox.Show(this, "Ошибка отправки сообщения!", "Возможно, собеседник не запустил мессенджер!");
+		}
 
 		private void ScrollToLastMessage(object sender, NewMessageEventArgs e)
         {

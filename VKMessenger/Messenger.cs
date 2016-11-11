@@ -114,6 +114,11 @@ namespace VKMessenger
 
 			if (IsEncryptionEnabled)
 			{
+				if (messageId < 0)
+				{
+					return messageId;
+				}
+
 				Message msg = await LoadMessageAsync(messageId);
 				msg.Body = message;
 				OnMessageSent(new VkMessage(msg, conversation));

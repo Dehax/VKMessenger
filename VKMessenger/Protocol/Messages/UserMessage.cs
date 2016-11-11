@@ -217,7 +217,9 @@ namespace VKMessenger.Protocol.Messages
 				return UserMessageType.None;
 			}
 
-			string encodedBase64 = messageBase64.Substring(HEADER.Length);
+			string seedBase64 = messageBase64.Substring(HEADER.Length, SEED_SIZE * 4 / 3);
+			byte[] seed = Convert.FromBase64String(seedBase64);
+			string encodedBase64 = messageBase64.Substring(HEADER.Length + seedBase64.Length + 1);
 			byte[] data = Convert.FromBase64String(encodedBase64);
 			byte code = data[1];
 
