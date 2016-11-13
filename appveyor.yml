@@ -27,5 +27,5 @@ deploy:
   auth_token:
     secure: hJNjTvWa0u5NMM7SUMuO9Yr5/bF6Wd78mUebkrvhMTm9ZoT36GuH2pHZgpLoAAgT
   artifact: VKMessenger-v$(APPVEYOR_BUILD_VERSION)
-  draft: true
+  prerelease: true
   force_update: true

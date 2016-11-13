@@ -38,6 +38,7 @@ Name: "quicklaunchicon"; Description: "{cm:CreateQuickLaunchIcon}"; GroupDescrip
 
 [Files]
 Source: "VKMessenger\bin\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+Source: "VKMessenger\bin\Release\{#MyAppExeName}.config"; DestDir: "{app}"; Flags: ignoreversion
 Source: "VKMessenger\bin\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
