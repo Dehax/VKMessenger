@@ -1,0 +1,31 @@
+version: 0.3.{build}
+configuration: Release
+platform: Any CPU
+assembly_info:
+  patch: true
+  file: '**\AssemblyInfo.*'
+  assembly_version: '{version}'
+  assembly_file_version: '{version}'
+  assembly_informational_version: '{version}'
+install:
+- choco install -y InnoSetup
+- set PATH="C:\Program Files (x86)\Inno Setup 5";%PATH%
+before_build:
+- cmd: nuget restore
+build:
+  verbosity: minimal
+after_build:
+- iscc installer.iss
+artifacts:
+- path: bld\VKMessenger_setup.exe
+  name: VKMessenger-v$(APPVEYOR_BUILD_VERSION)
+deploy:
+- provider: GitHub
+  tag: v$(APPVEYOR_BUILD_VERSION)
+  release: VK Messenger v$(APPVEYOR_BUILD_VERSION)
+  description: "Релиз мессенджера VK Messenger, автоматически собранный с помощью AppVeyor"
+  auth_token:
+    secure: hJNjTvWa0u5NMM7SUMuO9Yr5/bF6Wd78mUebkrvhMTm9ZoT36GuH2pHZgpLoAAgT
+  artifact: VKMessenger-v$(APPVEYOR_BUILD_VERSION)
+  draft: true
+  force_update: true

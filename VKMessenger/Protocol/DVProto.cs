@@ -20,7 +20,9 @@ namespace VKMessenger.Protocol
 	{
 		private const int ENCRYPTION_KEY_SIZE = 32;
 		private const int ENCRYPTION_IV_SIZE = 4;
-		private const int TIMEOUT = 60 * 1000;
+		private const int TIMEOUT = 10 * 1000;
+
+		private object _lock = new object();
 
 		private VkApi _vk;
 		public VkApi Vk { get { return _vk; } }
@@ -41,9 +43,14 @@ namespace VKMessenger.Protocol
 		{
 			long userId = message.PeerId.Value;
 
+			if (_handshakeEvents.ContainsKey(userId))
+			{
+				return -1;
+			}
+
 			_handshakeEvents.Add(userId, new AutoResetEvent(false));
 
-			await ApplyForPublicKeyAsync(message.PeerId.Value);
+			await ApplyForPublicKeyAsync(userId);
 
 			if (!_handshakeEvents[userId].WaitOne(TIMEOUT))
 			{
