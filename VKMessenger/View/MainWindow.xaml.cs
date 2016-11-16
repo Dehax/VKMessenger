@@ -47,8 +47,11 @@ namespace VKMessenger.View
 
         public void UnTrayWindow()
         {
-            Show();
-            WindowState = WindowState.Normal;
+			if (WindowState != WindowState.Normal)
+			{
+				Show();
+				WindowState = WindowState.Normal;
+			}
         }
 
         private void MainWindow_StateChanged(object sender, EventArgs e)

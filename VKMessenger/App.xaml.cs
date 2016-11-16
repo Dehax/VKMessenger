@@ -79,7 +79,7 @@ namespace VKMessenger
 
 		private void taskbarIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)
 		{
-			((MainWindow)MainWindow).UnTrayWindow();
+			(MainWindow as MainWindow)?.UnTrayWindow();
 		}
 		
 		protected override void OnExit(ExitEventArgs e)

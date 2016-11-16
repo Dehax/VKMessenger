@@ -21,6 +21,10 @@ namespace VKMessenger.Protocol.Messages
 		/// </summary>
 		ResponseKey = 2,
 		/// <summary>
+		/// Передача ключа шифрования.
+		/// </summary>
+		SyncKey = 3,
+		/// <summary>
 		/// Пользовательское сообщение.
 		/// </summary>
 		UserMessage = 32,

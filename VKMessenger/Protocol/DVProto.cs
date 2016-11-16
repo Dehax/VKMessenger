@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Management;
+using System.Net.NetworkInformation;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -27,12 +29,16 @@ namespace VKMessenger.Protocol
 		private VkApi _vk;
 		public VkApi Vk { get { return _vk; } }
 
+		private readonly string _deviceId;
+
 		// Список ожидаемых рукопожатий.
 		private Dictionary<long, AutoResetEvent> _handshakeEvents = new Dictionary<long, AutoResetEvent>();
 
 		public DVProto(VkApi vk)
 		{
 			_vk = vk;
+
+			_deviceId = GetHardDriveSerial();
 		}
 
 		/// <summary>
@@ -93,7 +99,7 @@ namespace VKMessenger.Protocol
 		{
 			return Task.Run(() =>
 			{
-				TextUserMessage textUserMessage = new TextUserMessage(TryGetRSAKey(userId, false), message.Message);
+				TextUserMessage textUserMessage = new TextUserMessage(TryGetRSAKey(false, userId), message.Message);
 				byte[] key = new byte[ENCRYPTION_KEY_SIZE];
 				byte[] iv = new byte[ENCRYPTION_IV_SIZE];
 				using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
@@ -139,7 +145,7 @@ namespace VKMessenger.Protocol
 					long userId = message.UserId.Value;
 					CspParameters csp = new CspParameters()
 					{
-						KeyContainerName = nameof(VKMessenger) + "_to_" + Convert.ToString(message.UserId.Value),
+						KeyContainerName = GetKeyContainerName(false, message.UserId.Value),
 						Flags = CspProviderFlags.CreateEphemeralKey
 					};
 					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
@@ -157,7 +163,7 @@ namespace VKMessenger.Protocol
 						{
 							try
 							{
-								TextUserMessage textUserMessage = new TextUserMessage(message.Body, TryGetRSAKey(message.FromId.Value, true));
+								TextUserMessage textUserMessage = new TextUserMessage(message.Body, TryGetRSAKey(true, message.FromId.Value));
 								result = message;
 								result.Body = textUserMessage.Text;
 							}
@@ -192,7 +198,7 @@ namespace VKMessenger.Protocol
 			long userId = message.UserId.Value;
 			CspParameters csp = new CspParameters()
 			{
-				KeyContainerName = nameof(VKMessenger) + "_from_" + Convert.ToString(userId)
+				KeyContainerName = GetKeyContainerName(true, userId)
 			};
 			RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
 			//rsa.PersistKeyInCsp = false;
@@ -210,18 +216,12 @@ namespace VKMessenger.Protocol
 			Utils.Extensions.EndVkInvoke();
 		}
 
-		private RSACryptoServiceProvider TryGetRSAKey(long userId, bool from)
+		private RSACryptoServiceProvider TryGetRSAKey(bool from, long userId)
 		{
-			string containerName;
+			string containerName = GetKeyContainerName(from, userId);
 
-			if (from)
+			if (!from)
 			{
-				containerName = nameof(VKMessenger) + "_from_" + Convert.ToString(userId);
-			}
-			else
-			{
-				containerName = nameof(VKMessenger) + "_to_" + Convert.ToString(userId);
-
 				return GetPublicKey(containerName);
 			}
 
@@ -274,7 +274,6 @@ namespace VKMessenger.Protocol
 			sb.Append("PublicKeys");
 			sb.Append(Path.DirectorySeparatorChar);
 			sb.Append(containerName + ".xml");
-
 			
 			RSACryptoServiceProvider rsaPublicKey = new RSACryptoServiceProvider();
 
@@ -290,6 +289,36 @@ namespace VKMessenger.Protocol
 			}
 
 			return rsaPublicKey;
+		}
+
+		/// <summary>
+		/// Возвращает имя контейнера ключа.
+		/// </summary>
+		/// <param name="from">Показывает, что ключ используется для получения сообщений.</param>
+		/// <param name="userId">ID пользователя.</param>
+		/// <param name="deviceId">ID устройства пользователя.</param>
+		/// <returns></returns>
+		private string GetKeyContainerName(bool from, long userId, string deviceId = "")
+		{
+			return $"{nameof(VKMessenger)}{(from ? "_from_" : "_to_")}{Convert.ToString(userId)}-{Convert.ToString(deviceId)}";
+		}
+
+		/// <summary>
+		/// Возвращает серийный номер первого жёсткого диска.
+		/// </summary>
+		/// <returns>Серийный номер жёсткого диска.</returns>
+		private string GetHardDriveSerial()
+		{
+			ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_PhysicalMedia");
+
+			string serial = null;
+			foreach (ManagementObject wmiHardDrive in searcher.Get())
+			{
+				serial = wmiHardDrive["SerialNumber"].ToString();
+				break;
+			}
+
+			return serial;
 		}
 	}
 }
