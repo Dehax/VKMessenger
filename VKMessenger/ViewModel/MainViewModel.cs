@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Threading.Tasks;
 using VKMessenger.Model;
+using VKMessenger.Protocol;
 using VKMessenger.ViewModel.Commands;
 using VkNet;
 using VkNet.Enums;
@@ -67,6 +70,23 @@ namespace VKMessenger.ViewModel
 				}
 			}
 		}
+
+		//private string LastDeviceId
+		//{
+		//	get
+		//	{
+		//		StringBuilder deviceIdPathSb = new StringBuilder(Utils.Extensions.ApplicationFolderPath);
+		//		deviceIdPathSb.Append(Path.DirectorySeparatorChar);
+		//		deviceIdPathSb.Append($"DeviceID-{SelectedConversation.PeerId}.xml");
+
+		//		if (!File.Exists(deviceIdPathSb.ToString()))
+		//		{
+		//			return null;
+		//		}
+
+		//		return File.ReadAllText(deviceIdPathSb.ToString(), Encoding.ASCII);
+		//	}
+		//}
 
 		private int _selectedConversationIndex = -1;
 		/// <summary>
@@ -249,7 +269,7 @@ namespace VKMessenger.ViewModel
 		/// </summary>
 		private async void SendMessageExecute()
 		{
-			long id = await _messenger.SendMessage(SendingMessageText, SelectedConversation);
+			long id = await _messenger.SendMessage(SendingMessageText, SelectedConversation, KeysStorage.GetLastDeviceId(SelectedConversation.PeerId));
 			
 			if (id >= 0)
 			{

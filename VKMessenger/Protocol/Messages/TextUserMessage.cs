@@ -12,20 +12,18 @@ namespace VKMessenger.Protocol.Messages
 	/// </summary>
 	public class TextUserMessage : UserMessage
 	{
-		private string _text;
+		//private string _text;
 		public string Text
 		{
-			get { return _text; }
-			protected set { _text = value; }
+			get { return Encoding.UTF8.GetString(UserMessageData); }
+			//protected set { _text = value; }
 		}
 
 		/// <summary>
 		/// Создаёт текстовое пользовательское сообщение.
 		/// </summary>
-		/// <param name="rsaPublicKey"></param>
-		/// <param name="message"></param>
-		public TextUserMessage(RSACryptoServiceProvider rsaPublicKey, string message)
-			: base(rsaPublicKey)
+		public TextUserMessage(string message, bool create)
+			: base()
 		{
 			UserMessageType = UserMessageType.Text;
 			UserMessageData = Encoding.UTF8.GetBytes(message);
@@ -34,12 +32,9 @@ namespace VKMessenger.Protocol.Messages
 		/// <summary>
 		/// Разбирает текстовое пользовательское сообщение.
 		/// </summary>
-		/// <param name="messageBase64">Содержимое текстового пользовательского сообщения в формате Base64</param>
-		/// <param name="rsaPrivateKey">Приватный ключ для расшифрования сообщения</param>
-		public TextUserMessage(string messageBase64, RSACryptoServiceProvider rsaPrivateKey)
-			: base(messageBase64, rsaPrivateKey)
+		public TextUserMessage(string messageBase64)
+			: base(messageBase64)
 		{
-			Text = Encoding.UTF8.GetString(UserMessageData);
 		}
 	}
 }

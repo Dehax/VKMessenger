@@ -27,6 +27,11 @@ namespace VKMessenger.Model
 		}
 
 		/// <summary>
+		/// ID устройства, с которого было отправлено сообщение.
+		/// </summary>
+		public string DeviceId { get; set; }
+
+		/// <summary>
 		/// Фамилия Имя автора сообщения.
 		/// </summary>
 		public string AuthorFullName

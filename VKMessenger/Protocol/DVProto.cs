@@ -20,9 +20,13 @@ namespace VKMessenger.Protocol
 	/// </summary>
 	public class DVProto : IEndToEndProtocol
 	{
-		private const int ENCRYPTION_KEY_SIZE = 32;
-		private const int ENCRYPTION_IV_SIZE = 4;
+		public const int ENCRYPTION_KEY_SIZE = 32;
+		public const int ENCRYPTION_IV_SIZE = 16;
+#if DEBUG
+		private const int TIMEOUT = 10 * 60 * 1000;
+#else
 		private const int TIMEOUT = 10 * 1000;
+#endif
 
 		private object _lock = new object();
 
@@ -30,6 +34,7 @@ namespace VKMessenger.Protocol
 		public VkApi Vk { get { return _vk; } }
 
 		private readonly string _deviceId;
+		//private string _lastDeviceId;
 
 		// Список ожидаемых рукопожатий.
 		private Dictionary<long, AutoResetEvent> _handshakeEvents = new Dictionary<long, AutoResetEvent>();
@@ -38,14 +43,14 @@ namespace VKMessenger.Protocol
 		{
 			_vk = vk;
 
-			_deviceId = GetHardDriveSerial();
+			_deviceId = KeysStorage.GetHardDriveSerial();
 		}
 
 		/// <summary>
 		/// Оправить новое сообщение с использованием сквозного шифрования (E2EE).
 		/// </summary>
 		/// <param name="message">Параметры нового сообщения.</param>
-		public async Task<long> SendMessageAsync(MessagesSendParams message)
+		public async Task<long> SendMessageAsync(MessagesSendParams message, string deviceId)
 		{
 			long userId = message.PeerId.Value;
 
@@ -54,39 +59,89 @@ namespace VKMessenger.Protocol
 				return -1;
 			}
 
-			_handshakeEvents.Add(userId, new AutoResetEvent(false));
+			byte[] key = null;
+			byte[] iv = null;
 
-			await ApplyForPublicKeyAsync(userId);
-
-			if (!_handshakeEvents[userId].WaitOne(TIMEOUT))
+			// Если есть публичный и симметричный ключи, только отправить сообщение.
+			// Иначе запросить публичный и отправить симметричный.
+			if (string.IsNullOrEmpty(deviceId) || !KeysStorage.FindPublicKey(false, userId, deviceId) || !KeysStorage.FindEncryptionKey(false, userId, deviceId))
 			{
-				// Не дождались ответа, возвращаем ошибку
+				_handshakeEvents.Add(userId, new AutoResetEvent(false));
+
+				await ApplyForPublicKeyAsync(userId);
+
+				if (!_handshakeEvents[userId].WaitOne(TIMEOUT))
+				{
+					// Не дождались ответа, возвращаем ошибку
+					_handshakeEvents.Remove(userId);
+
+					return -1;
+				}
+
 				_handshakeEvents.Remove(userId);
 
-				return -1;
+				key = new byte[ENCRYPTION_KEY_SIZE];
+				iv = new byte[ENCRYPTION_IV_SIZE];
+				using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+				{
+					rng.GetBytes(key);
+					rng.GetBytes(iv);
+				}
+
+				KeysStorage.SaveEncryptionKey(false, userId, deviceId, key, iv);
 			}
 
-			_handshakeEvents.Remove(userId);
+			if (deviceId == null)
+			{
+				//deviceId = _lastDeviceId;
+				deviceId = KeysStorage.GetLastDeviceId(userId);
+			}
 
-			return await EncryptAndSendMessageAsync(message, userId);
+			if (key == null || iv == null)
+			{
+				KeysStorage.GetEncryptionKey(false, userId, deviceId, out key, out iv);
+			}
+
+			await EncryptAndSendSymmetricKey(KeysStorage.GetPublicKey(userId, deviceId), userId, key, iv);
+
+			return await EncryptAndSendMessageAsync(message, userId, key, iv);
 		}
 
 		/// <summary>
 		/// Запросить публичный ключ для отправки зашифрованных сообщений.
 		/// </summary>
 		/// <param name="userId">ID пользователя, которому будет отправлен запрос</param>
-		private Task ApplyForPublicKeyAsync(long userId)
+		private Task<long> ApplyForPublicKeyAsync(long userId)
 		{
 			return Task.Run(() =>
 			{
 				RequestKeyMessage requestKeyMessage = new RequestKeyMessage();
 				Utils.Extensions.BeginVkInvoke(Vk);
-				Vk.Messages.Send(new MessagesSendParams()
+				long id = Vk.Messages.Send(new MessagesSendParams()
 				{
 					PeerId = userId,
 					Message = requestKeyMessage.DataBase64
 				});
 				Utils.Extensions.EndVkInvoke();
+
+				return id;
+			});
+		}
+
+		private Task<long> EncryptAndSendSymmetricKey(RSACryptoServiceProvider rsaPublicKey, long userId, byte[] key, byte[] iv)
+		{
+			return Task.Run(() =>
+			{
+				SyncKeyMessage syncKeyMessage = new SyncKeyMessage(key, iv, rsaPublicKey);
+				Utils.Extensions.BeginVkInvoke(Vk);
+				long id = Vk.Messages.Send(new MessagesSendParams()
+				{
+					PeerId = userId,
+					Message = syncKeyMessage.DataBase64
+				});
+				Utils.Extensions.EndVkInvoke();
+
+				return id;
 			});
 		}
 
@@ -95,19 +150,11 @@ namespace VKMessenger.Protocol
 		/// </summary>
 		/// <param name="message">Сообщение для отправки</param>
 		/// <param name="userId">ID пользователя-получателя сообщения</param>
-		private Task<long> EncryptAndSendMessageAsync(MessagesSendParams message, long userId)
+		private Task<long> EncryptAndSendMessageAsync(MessagesSendParams message, long userId, byte[] key, byte[] iv)
 		{
 			return Task.Run(() =>
 			{
-				TextUserMessage textUserMessage = new TextUserMessage(TryGetRSAKey(false, userId), message.Message);
-				byte[] key = new byte[ENCRYPTION_KEY_SIZE];
-				byte[] iv = new byte[ENCRYPTION_IV_SIZE];
-				using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-				{
-					rng.GetBytes(key);
-					//rng.GetBytes(iv);
-				}
-				Buffer.BlockCopy(key, 0, iv, 0, iv.Length);
+				TextUserMessage textUserMessage = new TextUserMessage(message.Message, true);
 				textUserMessage.Encrypt(key, iv);
 				Utils.Extensions.BeginVkInvoke(Vk);
 				long id = Vk.Messages.Send(new MessagesSendParams()
@@ -131,10 +178,14 @@ namespace VKMessenger.Protocol
 		{
 			result = null;
 
+			long userId = message.UserId.Value;
+
 			switch (ServiceMessage.CheckServiceMessageType(message.Body))
 			{
 			case ServiceMessageType.RequestKey:
 				{
+					RequestKeyMessage requestKeyMessage = new RequestKeyMessage(message.Body);
+					KeysStorage.SaveLastDeviceId(userId, requestKeyMessage.DeviceId);
 					GenerateAndSendNewKey(message);
 				}
 				break;
@@ -142,17 +193,27 @@ namespace VKMessenger.Protocol
 				{
 					// Получен публичный ключ RSA, сохранить для соответствующего пользователя.
 					ResponseKeyMessage responseKeyMessage = new ResponseKeyMessage(message.Body);
-					long userId = message.UserId.Value;
+					
+					KeysStorage.SaveLastDeviceId(userId, responseKeyMessage.DeviceId);
 					CspParameters csp = new CspParameters()
 					{
-						KeyContainerName = GetKeyContainerName(false, message.UserId.Value),
+						KeyContainerName = KeysStorage.GetKeyContainerName(false, userId, responseKeyMessage.DeviceId),
 						Flags = CspProviderFlags.CreateEphemeralKey
 					};
 					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
 					rsa.ImportCspBlob(responseKeyMessage.RSAPublicKey);
-					SavePublicKey(rsa);
+					KeysStorage.SavePublicKey(rsa, userId, responseKeyMessage.DeviceId);
+					//_lastDeviceId = responseKeyMessage.DeviceId;
 
 					_handshakeEvents[userId].Set();
+				}
+				break;
+			case ServiceMessageType.SyncKey:
+				{
+					SyncKeyMessage syncKeyMessage = new SyncKeyMessage(message.Body);
+					syncKeyMessage.Decrypt(KeysStorage.TryGetRSAKey(true, userId, syncKeyMessage.DeviceId));
+					
+					KeysStorage.SaveEncryptionKey(true, userId, syncKeyMessage.DeviceId, syncKeyMessage.Key, syncKeyMessage.IV);
 				}
 				break;
 			case ServiceMessageType.UserMessage:
@@ -161,11 +222,19 @@ namespace VKMessenger.Protocol
 					{
 					case UserMessageType.Text:
 						{
+							byte[] key;
+							byte[] iv;
+							TextUserMessage textUserMessage = new TextUserMessage(message.Body);
+
 							try
 							{
-								TextUserMessage textUserMessage = new TextUserMessage(message.Body, TryGetRSAKey(true, message.FromId.Value));
+								KeysStorage.GetEncryptionKey(true, userId, textUserMessage.DeviceId, out key, out iv);
+								textUserMessage.Decrypt(key, iv);
 								result = message;
+								result.DeviceId = textUserMessage.DeviceId;
 								result.Body = textUserMessage.Text;
+
+								KeysStorage.SaveLastDeviceId(userId, textUserMessage.DeviceId);
 							}
 							catch (CryptographicException)
 							{
@@ -198,7 +267,7 @@ namespace VKMessenger.Protocol
 			long userId = message.UserId.Value;
 			CspParameters csp = new CspParameters()
 			{
-				KeyContainerName = GetKeyContainerName(true, userId)
+				KeyContainerName = KeysStorage.GetKeyContainerName(true, userId, KeysStorage.GetHardDriveSerial())
 			};
 			RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
 			//rsa.PersistKeyInCsp = false;
@@ -216,109 +285,6 @@ namespace VKMessenger.Protocol
 			Utils.Extensions.EndVkInvoke();
 		}
 
-		private RSACryptoServiceProvider TryGetRSAKey(bool from, long userId)
-		{
-			string containerName = GetKeyContainerName(from, userId);
-
-			if (!from)
-			{
-				return GetPublicKey(containerName);
-			}
-
-			CspParameters csp = new CspParameters()
-			{
-				KeyContainerName = containerName,
-				Flags = CspProviderFlags.UseExistingKey
-			};
-
-			RSACryptoServiceProvider rsa;
-
-			try
-			{
-				rsa = new RSACryptoServiceProvider(2048, csp);
-			}
-			catch (Exception)
-			{
-				rsa = null;
-			}
-
-			return rsa;
-		}
-
-		/// <summary>
-		/// Сохранить публичный ключ RSA.
-		/// </summary>
-		/// <param name="rsaPublicKey">Публичный ключ RSA.</param>
-		private void SavePublicKey(RSACryptoServiceProvider rsaPublicKey)
-		{
-			string publicKeyXml = rsaPublicKey.ToXmlString(false);
-
-			StringBuilder sb = new StringBuilder(Utils.Extensions.ApplicationFolderPath);
-			sb.Append(Path.DirectorySeparatorChar);
-			sb.Append("PublicKeys");
-			Directory.CreateDirectory(sb.ToString());
-			sb.Append(Path.DirectorySeparatorChar);
-			sb.Append(rsaPublicKey.CspKeyContainerInfo.KeyContainerName + ".xml");
-			File.WriteAllText(sb.ToString(), publicKeyXml);
-		}
-
-		/// <summary>
-		/// Получить публичный ключ RSA.
-		/// </summary>
-		/// <param name="containerName">Имя ключа, который необходимо получить.</param>
-		/// <returns>Публичный ключ RSA</returns>
-		private RSACryptoServiceProvider GetPublicKey(string containerName)
-		{
-			StringBuilder sb = new StringBuilder(Utils.Extensions.ApplicationFolderPath);
-			sb.Append(Path.DirectorySeparatorChar);
-			sb.Append("PublicKeys");
-			sb.Append(Path.DirectorySeparatorChar);
-			sb.Append(containerName + ".xml");
-			
-			RSACryptoServiceProvider rsaPublicKey = new RSACryptoServiceProvider();
-
-			try
-			{
-				string publicKeyXml = File.ReadAllText(sb.ToString());
-				rsaPublicKey.FromXmlString(publicKeyXml);
-			}
-			catch (Exception ex) when (ex is FileNotFoundException || ex is DirectoryNotFoundException)
-			{
-				rsaPublicKey.Dispose();
-				rsaPublicKey = null;
-			}
-
-			return rsaPublicKey;
-		}
-
-		/// <summary>
-		/// Возвращает имя контейнера ключа.
-		/// </summary>
-		/// <param name="from">Показывает, что ключ используется для получения сообщений.</param>
-		/// <param name="userId">ID пользователя.</param>
-		/// <param name="deviceId">ID устройства пользователя.</param>
-		/// <returns></returns>
-		private string GetKeyContainerName(bool from, long userId, string deviceId = "")
-		{
-			return $"{nameof(VKMessenger)}{(from ? "_from_" : "_to_")}{Convert.ToString(userId)}-{Convert.ToString(deviceId)}";
-		}
-
-		/// <summary>
-		/// Возвращает серийный номер первого жёсткого диска.
-		/// </summary>
-		/// <returns>Серийный номер жёсткого диска.</returns>
-		private string GetHardDriveSerial()
-		{
-			ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT * FROM Win32_PhysicalMedia");
-
-			string serial = null;
-			foreach (ManagementObject wmiHardDrive in searcher.Get())
-			{
-				serial = wmiHardDrive["SerialNumber"].ToString();
-				break;
-			}
-
-			return serial;
-		}
+		
 	}
 }

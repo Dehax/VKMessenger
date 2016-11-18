@@ -17,5 +17,11 @@ namespace VKMessenger.Protocol.Messages
 		{
 			Type = ServiceMessageType.RequestKey;
 		}
+
+		public RequestKeyMessage(string messageBase64)
+			: base(messageBase64)
+		{
+
+		}
 	}
 }

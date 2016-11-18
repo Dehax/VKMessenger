@@ -65,9 +65,10 @@ namespace VKMessenger.Protocol.Messages
 		{
 			get
 			{
-				byte[] resultData = new byte[1 + Data.Length];
+				byte[] resultData = new byte[1 + _deviceId.Length + Data.Length];
 				resultData[0] = (byte)Type;
-				Buffer.BlockCopy(Data, 0, resultData, 1, Data.Length);
+				Buffer.BlockCopy(_deviceId, 0, resultData, 1, _deviceId.Length);
+				Buffer.BlockCopy(Data, 0, resultData, 1 + _deviceId.Length, Data.Length);
 
 				return $"{HEADER}{Convert.ToBase64String(SEED)}\n{Convert.ToBase64String(resultData)}";
 			}
@@ -83,6 +84,27 @@ namespace VKMessenger.Protocol.Messages
 			protected set { _type = value; }
 		}
 
+		private byte[] _deviceId;
+		public string DeviceId
+		{
+			get
+			{
+				if (_deviceId == null)
+				{
+					return string.Empty;
+				}
+
+				return Encoding.ASCII.GetString(_deviceId, 1, _deviceId.Length - 1);
+			}
+			set
+			{
+				byte[] deviceIdData = Encoding.ASCII.GetBytes(value);
+				_deviceId = new byte[1 + deviceIdData.Length];
+				_deviceId[0] = (byte)deviceIdData.Length;
+				Buffer.BlockCopy(deviceIdData, 0, _deviceId, 1, deviceIdData.Length);
+			}
+		}
+
 		/// <summary>
 		/// Создаёт новое служебное сообщение с неизвестным типом.
 		/// </summary>
@@ -92,6 +114,8 @@ namespace VKMessenger.Protocol.Messages
 			{
 				rng.GetBytes(SEED);
 			}
+
+			DeviceId = KeysStorage.GetHardDriveSerial();
 		}
 
 		/// <summary>
@@ -109,9 +133,14 @@ namespace VKMessenger.Protocol.Messages
 			SEED = Convert.FromBase64String(seedBase64);
 			string encodedBase64 = messageBase64.Substring(HEADER.Length + seedBase64.Length + 1);
 			byte[] messageData = Convert.FromBase64String(encodedBase64);
-			Data = new byte[messageData.Length - 1];
-			Type = (ServiceMessageType)Data[0];
-			Buffer.BlockCopy(messageData, 1, Data, 0, Data.Length);
+			Data = new byte[messageData.Length - messageData[1] - 2];
+			_deviceId = new byte[messageData[1] + 1];
+			Buffer.BlockCopy(messageData, 1, _deviceId, 0, _deviceId.Length);
+			if (Data.Length > 0)
+			{
+				Buffer.BlockCopy(messageData, 1 + _deviceId.Length, Data, 0, Data.Length);
+			}
+			Type = (ServiceMessageType)messageData[0];
 		}
 
 		/// <summary>

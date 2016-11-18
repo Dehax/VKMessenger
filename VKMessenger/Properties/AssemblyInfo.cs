@@ -10,7 +10,7 @@ using System.Windows;
 [assembly: AssemblyDescription("A simple VK messenger")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("DehaxSoft")]
-[assembly: AssemblyProduct("VK Messenger")]
+[assembly: AssemblyProduct("VKMessenger")]
 [assembly: AssemblyCopyright("Copyright © DehaxSoft 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -50,7 +50,7 @@ using System.Windows;
 // Можно задать все значения или принять номера сборки и редакции по умолчанию 
 // используя "*", как показано ниже:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.2.1.2")]
-[assembly: AssemblyFileVersion("0.2.1.2")]
+[assembly: AssemblyVersion("0.4.0.*")]
+[assembly: AssemblyFileVersion("0.4.0.0")]
 [assembly: NeutralResourcesLanguage("ru")]
 

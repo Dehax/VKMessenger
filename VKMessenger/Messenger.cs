@@ -79,7 +79,7 @@ namespace VKMessenger
 		/// </summary>
 		/// <param name="message">Текст сообщения для отправки.</param>
 		/// <param name="conversation">Беседа, в которую будет отправлено сообщение.</param>
-		public async Task<long> SendMessage(string message, Conversation conversation)
+		public async Task<long> SendMessage(string message, Conversation conversation, string deviceId)
 		{
 			Task<long> sendMessageTask;
 
@@ -91,7 +91,7 @@ namespace VKMessenger
 					{
 						PeerId = conversation.PeerId,
 						Message = message
-					});
+					}, deviceId);
 				});
 			}
 			else
@@ -157,8 +157,13 @@ namespace VKMessenger
 		{
 			return Task.Run(async () =>
 			{
+				Utils.Extensions.BeginVkInvoke(Vk);
 				LongPollServerResponse longPoll = Vk.Messages.GetLongPollServer(true, true);
+				Utils.Extensions.EndVkInvoke();
 
+				// TODO: &version — версия. Актуальная версия: 1.
+				// Для версии 0 (по умолчанию) идентификаторы сообществ будут приходить в формате group_id + 1000000000
+				// для сохранения обратной совместимости.
 				string longPollUrl = @"https://{0}?act=a_check&key={1}&ts={2}&wait=25";
 				ulong ts = longPoll.Ts;
 
@@ -176,13 +181,25 @@ namespace VKMessenger
 						}
 
 						JObject response = JObject.Parse(responseText);
+						
 						try
 						{
 							ts = (ulong)response["ts"];
 						}
 						catch (Exception)
 						{
-							continue;
+							int failedCode = (int)response["failed"];
+							
+							if (failedCode == 2)
+							{
+								Utils.Extensions.BeginVkInvoke(Vk);
+								longPoll = Vk.Messages.GetLongPollServer(true, true);
+								Utils.Extensions.EndVkInvoke();
+								ts = longPoll.Ts;
+								continue;
+							}
+
+							throw;
 						}
 
 						JArray updatesArray = (JArray)response["updates"];
