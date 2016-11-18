@@ -18,12 +18,12 @@ install:
   - choco install -y InnoSetup
   - set PATH="C:\Program Files (x86)\Inno Setup 5";%PATH%
 before_build:
-  - cmd: nuget restore
+  - nuget restore
 build:
   verbosity: minimal
 after_build:
   - iscc installer.iss
-  - ren bld\VKMessenger_setup.exe VKMessenger-v$(APPVEYOR_BUILD_VERSION)_setup.exe
+  - ren bld\VKMessenger_setup.exe VKMessenger-v%APPVEYOR_BUILD_VERSION%_setup.exe
 artifacts:
   - path: bld\VKMessenger-v$(APPVEYOR_BUILD_VERSION)_setup.exe
     name: VKMessenger-v$(APPVEYOR_BUILD_VERSION)
