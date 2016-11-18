@@ -251,7 +251,7 @@ namespace VKMessenger.Protocol
 						{
 							throw new NotImplementedException();
 						}
-						break;
+						//break;
 					}
 				}
 				break;

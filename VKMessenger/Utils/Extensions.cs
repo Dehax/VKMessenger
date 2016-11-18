@@ -15,7 +15,7 @@ namespace VKMessenger.Utils
 		/// Точное время последнего вызова VK API-метода.
 		/// </summary>
 		private static DateTime _lastVkInvokeTime;
-		private static Mutex _mutex = new Mutex(false, "VKMessenger");
+		private static Mutex _mutex = new Mutex(false, nameof(VKMessenger) + "_API");
 		private static string _localAppFolderPath = null;
 
 		static Extensions()

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -27,6 +28,8 @@ namespace VKMessenger
 
 		private TaskbarIcon _taskbarIcon;
 
+		private Mutex _singleInstanceMutex;
+
 		/// <summary>
 		/// Команда смены пользователя.
 		/// </summary>
@@ -48,7 +51,17 @@ namespace VKMessenger
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			base.OnStartup(e);
+#if !DEBUG
+			bool isNewInstance = false;
+			_singleInstanceMutex = new Mutex(true, nameof(VKMessenger), out isNewInstance);
 
+			if (!isNewInstance)
+			{
+				MessageBox.Show("Мессенджер уже запущен!");
+				Shutdown();
+				return;
+			}
+#endif
 			_taskbarIcon = new TaskbarIcon();
 			_taskbarIcon.ToolTip = nameof(VKMessenger);
 			_taskbarIcon.IconSource = new BitmapImage(new Uri(@"pack://application:,,,/VKMessenger;component/Images/Icons/VKMessenger.ico"));
@@ -173,7 +186,7 @@ namespace VKMessenger
 			else
 			{
 				SetupWebBrowserEmulationVersion();
-				AuthorizationWindow authWindow = new AuthorizationWindow(true);
+				AuthorizationWindow authWindow = new AuthorizationWindow(relogin);
 				authWindow.ShowDialog();
 				accessToken = authWindow.AccessToken;
 

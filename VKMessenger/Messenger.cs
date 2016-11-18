@@ -203,7 +203,7 @@ namespace VKMessenger
 								continue;
 							}
 
-							throw;
+							throw new Exception($"Ошибка LongPoll: {failedCode} [{responseText}]");
 						}
 
 						JArray updatesArray = (JArray)response["updates"];
