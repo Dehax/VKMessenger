@@ -33,17 +33,12 @@ namespace VKMessenger.Protocol
 		private VkApi _vk;
 		public VkApi Vk { get { return _vk; } }
 
-		private readonly string _deviceId;
-		//private string _lastDeviceId;
-
 		// Список ожидаемых рукопожатий.
 		private Dictionary<long, AutoResetEvent> _handshakeEvents = new Dictionary<long, AutoResetEvent>();
 
 		public DVProto(VkApi vk)
 		{
 			_vk = vk;
-
-			_deviceId = KeysStorage.GetHardDriveSerial();
 		}
 
 		/// <summary>
@@ -88,21 +83,20 @@ namespace VKMessenger.Protocol
 					rng.GetBytes(iv);
 				}
 
-				KeysStorage.SaveEncryptionKey(false, userId, deviceId, key, iv);
-			}
+				if (deviceId == null)
+				{
+					deviceId = KeysStorage.GetLastDeviceId(userId);
+				}
 
-			if (deviceId == null)
-			{
-				//deviceId = _lastDeviceId;
-				deviceId = KeysStorage.GetLastDeviceId(userId);
+				KeysStorage.SaveEncryptionKey(false, userId, deviceId, key, iv);
+
+				await EncryptAndSendSymmetricKey(KeysStorage.GetPublicKey(userId, deviceId), userId, key, iv);
 			}
 
 			if (key == null || iv == null)
 			{
 				KeysStorage.GetEncryptionKey(false, userId, deviceId, out key, out iv);
 			}
-
-			await EncryptAndSendSymmetricKey(KeysStorage.GetPublicKey(userId, deviceId), userId, key, iv);
 
 			return await EncryptAndSendMessageAsync(message, userId, key, iv);
 		}
@@ -186,7 +180,7 @@ namespace VKMessenger.Protocol
 				{
 					RequestKeyMessage requestKeyMessage = new RequestKeyMessage(message.Body);
 					KeysStorage.SaveLastDeviceId(userId, requestKeyMessage.DeviceId);
-					GenerateAndSendNewKey(message);
+					GenerateAndSendNewKey(message, requestKeyMessage.DeviceId);
 				}
 				break;
 			case ServiceMessageType.ResponseKey:
@@ -205,7 +199,19 @@ namespace VKMessenger.Protocol
 					KeysStorage.SavePublicKey(rsa, userId, responseKeyMessage.DeviceId);
 					//_lastDeviceId = responseKeyMessage.DeviceId;
 
-					_handshakeEvents[userId].Set();
+					if (_handshakeEvents.ContainsKey(userId))
+					{
+						_handshakeEvents[userId].Set();
+					}
+					else
+					{
+						byte[] key;
+						byte[] iv;
+						KeysStorage.GetEncryptionKey(false, userId, responseKeyMessage.DeviceId, out key, out iv);
+						EncryptAndSendSymmetricKey(rsa, userId, key, iv).Wait();
+
+						throw new Exception("Последнее сообщение не было отправлено! Повторите отправку.");
+					}
 				}
 				break;
 			case ServiceMessageType.SyncKey:
@@ -226,20 +232,19 @@ namespace VKMessenger.Protocol
 							byte[] iv;
 							TextUserMessage textUserMessage = new TextUserMessage(message.Body);
 
-							try
+							if (!KeysStorage.FindEncryptionKey(true, userId, textUserMessage.DeviceId))
 							{
-								KeysStorage.GetEncryptionKey(true, userId, textUserMessage.DeviceId, out key, out iv);
-								textUserMessage.Decrypt(key, iv);
-								result = message;
-								result.DeviceId = textUserMessage.DeviceId;
-								result.Body = textUserMessage.Text;
+								GenerateAndSendNewKey(message, textUserMessage.DeviceId);
+								break;
+							}
 
-								KeysStorage.SaveLastDeviceId(userId, textUserMessage.DeviceId);
-							}
-							catch (CryptographicException)
-							{
-								GenerateAndSendNewKey(message);
-							}
+							KeysStorage.GetEncryptionKey(true, userId, textUserMessage.DeviceId, out key, out iv);
+							textUserMessage.Decrypt(key, iv);
+							result = message;
+							result.DeviceId = textUserMessage.DeviceId;
+							result.Body = textUserMessage.Text;
+
+							KeysStorage.SaveLastDeviceId(userId, textUserMessage.DeviceId);
 						}
 						break;
 					case UserMessageType.File:
@@ -261,13 +266,13 @@ namespace VKMessenger.Protocol
 		/// Сгенерировать и отправить новый публичный ключ.
 		/// </summary>
 		/// <param name="message">Параметры сообщения, содержащие ID пользователя, которому необходимо отправить ключ.</param>
-		private void GenerateAndSendNewKey(VkMessage message)
+		private void GenerateAndSendNewKey(VkMessage message, string deviceId)
 		{
 			// Удалить старый и сгенерировать новый ключ
 			long userId = message.UserId.Value;
 			CspParameters csp = new CspParameters()
 			{
-				KeyContainerName = KeysStorage.GetKeyContainerName(true, userId, KeysStorage.GetHardDriveSerial())
+				KeyContainerName = KeysStorage.GetKeyContainerName(true, userId, deviceId)
 			};
 			RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
 			//rsa.PersistKeyInCsp = false;

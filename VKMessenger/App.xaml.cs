@@ -259,7 +259,11 @@ namespace VKMessenger
 			using (StreamWriter sw = File.CreateText(logFilePath))
 			{
 				sw.WriteLine(DateTime.Now.ToString() + " - Необработанное исключение:");
-				sw.WriteLine(e.ExceptionObject);
+				Exception ex = (Exception)e.ExceptionObject;
+				StackTrace st = new StackTrace(ex, true);
+				StackFrame sf = st.GetFrame(0);
+
+				sw.WriteLine($"Номер строки, где возникло исключение: {sf.GetFileName()}:{sf.GetFileLineNumber()}:{sf.GetFileColumnNumber()}");
 			}
 
 			MessageBox.Show($"Приложение прекратило работу из-за непредвиденной ошибки. Посмотрите файл журнала \"{ logFilePath }\"", "Exception");

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Windows;
 using VKMessenger.ViewModel;
 
@@ -29,9 +30,20 @@ namespace VKMessenger.View
             StateChanged += MainWindow_StateChanged;
         }
 
-		private void ErrorSendMessage(object sender, EventArgs e)
+		private void ErrorSendMessage(object sender, ErrorEventArgs e)
 		{
-			MessageBox.Show(this, "Ошибка отправки сообщения!", "Возможно, собеседник не запустил мессенджер!");
+			if (string.IsNullOrWhiteSpace(e.GetException().Message))
+			{
+				Dispatcher.Invoke(() =>
+				{
+					MessageBox.Show(this, "Ошибка отправки сообщения!", "Возможно, собеседник не запустил мессенджер!");
+				});
+			}
+
+			Dispatcher.Invoke(() =>
+			{
+				MessageBox.Show(this, "Ошибка отправки сообщения!", e.GetException().Message);
+			});
 		}
 
 		private void ScrollToLastMessage(object sender, NewMessageEventArgs e)

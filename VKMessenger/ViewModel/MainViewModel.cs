@@ -6,6 +6,7 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using VKMessenger.Model;
 using VKMessenger.Protocol;
 using VKMessenger.ViewModel.Commands;
@@ -45,10 +46,16 @@ namespace VKMessenger.ViewModel
 					_messenger.NewMessage += ProcessNewMessage;
 					_messenger.MessageSent += ProcessNewMessage;
 					_messenger.MessageRead += MessageRead;
+					_messenger.ErrorSendingMessage += ErrorSendingMessage;
 					LoadConversations();
 					OnPropertyChanged();
 				}
 			}
+		}
+
+		private void ErrorSendingMessage(object sender, ErrorEventArgs e)
+		{
+			OnErrorSendMessage(e.GetException());
 		}
 
 		protected VkApi Vk { get { return _messenger.Vk; } }
@@ -153,7 +160,7 @@ namespace VKMessenger.ViewModel
 		/// <summary>
 		/// Происходит при ошибке отправки сообщения.
 		/// </summary>
-		public event EventHandler ErrorSendMessage;
+		public event ErrorEventHandler ErrorSendMessage;
 		#endregion
 
 		#region MVVM
@@ -259,9 +266,9 @@ namespace VKMessenger.ViewModel
 		/// <summary>
 		/// Происходит при ошибке отправки нового сообщения.
 		/// </summary>
-		protected virtual void OnErrorSendMessage()
+		protected virtual void OnErrorSendMessage(Exception exception)
 		{
-			ErrorSendMessage?.Invoke(this, EventArgs.Empty);
+			ErrorSendMessage?.Invoke(this, new ErrorEventArgs(exception));
 		}
 
 		/// <summary>
@@ -277,7 +284,7 @@ namespace VKMessenger.ViewModel
 			}
 			else
 			{
-				OnErrorSendMessage();
+				OnErrorSendMessage(new Exception());
 			}
 		}
 

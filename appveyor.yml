@@ -23,8 +23,9 @@ build:
   verbosity: minimal
 after_build:
   - iscc installer.iss
+  - ren bld\VKMessenger_setup.exe VKMessenger-v$(APPVEYOR_BUILD_VERSION)_setup.exe
 artifacts:
-  - path: bld\VKMessenger_setup.exe
+  - path: bld\VKMessenger-v$(APPVEYOR_BUILD_VERSION)_setup.exe
     name: VKMessenger-v$(APPVEYOR_BUILD_VERSION)
 deploy:
   - provider: GitHub

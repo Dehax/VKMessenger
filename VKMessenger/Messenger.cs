@@ -58,6 +58,10 @@ namespace VKMessenger
 		/// Происходит при прочтении сообщения.
 		/// </summary>
 		public event EventHandler<MessageReadEventArgs> MessageRead;
+		/// <summary>
+		/// Происходит при ошибке отправки сообщения.
+		/// </summary>
+		public event ErrorEventHandler ErrorSendingMessage;
 
 		private bool _cancelRequest = false;
 		private CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
@@ -310,18 +314,26 @@ namespace VKMessenger
 			if (IsEncryptionEnabled)
 			{
 				VkMessage result;
-				if (_dvProto.TryParseMessage(message, out result))
+				try
 				{
-					if (result != null)
+					if (_dvProto.TryParseMessage(message, out result))
 					{
-						// Расшифрованное сообщение.
-						NewMessage?.Invoke(this, new MessageEventArgs(result));
+						if (result != null)
+						{
+							// Расшифрованное сообщение.
+							NewMessage?.Invoke(this, new MessageEventArgs(result));
+						}
+					}
+					else
+					{
+						NewMessage?.Invoke(this, new MessageEventArgs(message));
 					}
 				}
-				else
+				catch (Exception e)
 				{
-					NewMessage?.Invoke(this, new MessageEventArgs(message));
+					OnErrorSendingMessage(e);
 				}
+				
 			}
 			else
 			{
@@ -342,9 +354,18 @@ namespace VKMessenger
 		/// Сообщение было прочитано.
 		/// </summary>
 		/// <param name="messageId">ID прочитанного сообщения.</param>
-		private void OnMessageRead(long messageId)
+		protected virtual void OnMessageRead(long messageId)
 		{
 			MessageRead?.Invoke(this, new MessageReadEventArgs(messageId));
+		}
+
+		/// <summary>
+		/// Ошибка отправки последнего сообщения.
+		/// </summary>
+		/// <param name="exception">Исключение, возникшее при отправке сообщения.</param>
+		protected virtual void OnErrorSendingMessage(Exception exception)
+		{
+			ErrorSendingMessage?.Invoke(this, new ErrorEventArgs(exception));
 		}
 
 		/// <summary>
