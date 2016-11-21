@@ -1,5 +1,5 @@
 ﻿<Window
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        x:Uid="settingsWindow" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -8,21 +8,24 @@
         mc:Ignorable="d"
         Title="Настройки" Height="300" Width="300" Icon="/VKMessenger;component/Images/Icons/VKMessenger.ico" WindowStartupLocation="CenterOwner" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
     <Window.DataContext>
-        <ViewModel:SettingsViewModel />
+        <ViewModel:SettingsViewModel x:Uid="settingsViewModel" />
     </Window.DataContext>
-    <Grid>
+    <Grid x:Uid="mainGrid">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition />
-            <ColumnDefinition />
+            <ColumnDefinition x:Uid="ColumnDefinition_1" />
+            <ColumnDefinition x:Uid="ColumnDefinition_2" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition />
-            <RowDefinition Height="Auto"/>
+            <RowDefinition x:Uid="RowDefinition_1" Height="Auto" />
+            <RowDefinition x:Uid="RowDefinition_2" Height="Auto" />
+            <RowDefinition x:Uid="RowDefinition_3" />
+            <RowDefinition x:Uid="RowDefinition_4" Height="Auto"/>
         </Grid.RowDefinitions>
 
         <CheckBox x:Uid="encryptionEnabledCheckBox" Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Margin="5" IsChecked="{Binding IsEncryptionEnabled}">Использовать сквозное шифрование (E2EE)</CheckBox>
+        <CheckBox x:Uid="notificationsEnabledCheckBox" Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Margin="5" IsChecked="{Binding IsNotificationsEnabled}">Включить уведомления</CheckBox>
 
-        <Button x:Uid="okButton" x:Name="okButton" Grid.Column="0" Grid.Row="1" IsDefault="True" Margin="5" Command="{Binding SaveSettingsCommand}" Click="okButton_Click">ОК</Button>
-        <Button x:Uid="cancelButton" x:Name="cancelButton" Grid.Column="1" Grid.Row="1" IsCancel="True" Margin="5">Отмена</Button>
+        <Button x:Uid="okButton" x:Name="okButton" Grid.Column="0" Grid.Row="3" IsDefault="True" Margin="5" Command="{Binding SaveSettingsCommand}" Click="okButton_Click">ОК</Button>
+        <Button x:Uid="cancelButton" x:Name="cancelButton" Grid.Column="1" Grid.Row="3" IsCancel="True" Margin="5">Отмена</Button>
     </Grid>
 </Window>

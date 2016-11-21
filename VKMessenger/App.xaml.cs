@@ -132,10 +132,13 @@ namespace VKMessenger
 			string title = e.Message.Conversation != null ? e.Message.Conversation.Title : "Новая беседа";
 			string message = e.Message.Body;
 
-			Dispatcher.Invoke(() =>
+			if (Settings.Default.IsNotificationsEnabled)
 			{
-				_taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
-			});
+				Dispatcher.Invoke(() =>
+				{
+					_taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
+				});
+			}
 		}
 
 		/// <summary>

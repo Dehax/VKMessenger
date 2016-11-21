@@ -167,7 +167,7 @@ namespace VKMessenger.Protocol
 		/// </summary>
 		/// <param name="message">Сообщение, которое необходимо разобрать.</param>
 		/// <param name="result">Результат разбора сообщения.</param>
-		/// <returns></returns>
+		/// <returns>Указывает, является ли сообщение служебным.</returns>
 		public bool TryParseMessage(VkMessage message, out VkMessage result)
 		{
 			result = null;
@@ -197,7 +197,6 @@ namespace VKMessenger.Protocol
 					RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
 					rsa.ImportCspBlob(responseKeyMessage.RSAPublicKey);
 					KeysStorage.SavePublicKey(rsa, userId, responseKeyMessage.DeviceId);
-					//_lastDeviceId = responseKeyMessage.DeviceId;
 
 					if (_handshakeEvents.ContainsKey(userId))
 					{
@@ -266,6 +265,7 @@ namespace VKMessenger.Protocol
 		/// Сгенерировать и отправить новый публичный ключ.
 		/// </summary>
 		/// <param name="message">Параметры сообщения, содержащие ID пользователя, которому необходимо отправить ключ.</param>
+		/// <param name="deviceId">ID устройства.</param>
 		private void GenerateAndSendNewKey(VkMessage message, string deviceId)
 		{
 			// Удалить старый и сгенерировать новый ключ
@@ -275,11 +275,6 @@ namespace VKMessenger.Protocol
 				KeyContainerName = KeysStorage.GetKeyContainerName(true, userId, deviceId)
 			};
 			RSACryptoServiceProvider rsa = new RSACryptoServiceProvider(2048, csp);
-			//rsa.PersistKeyInCsp = false;
-			//rsa.Clear();
-			//rsa = new RSACryptoServiceProvider(2048, csp);
-			//RSAParameters r = rsa.ExportParameters(true);
-			//string rs = rsa.ToXmlString(true);
 			ResponseKeyMessage responseKeyMessage = new ResponseKeyMessage(rsa.ExportCspBlob(false));
 			Utils.Extensions.BeginVkInvoke(Vk);
 			Vk.Messages.Send(new MessagesSendParams()
@@ -289,7 +284,5 @@ namespace VKMessenger.Protocol
 			});
 			Utils.Extensions.EndVkInvoke();
 		}
-
-		
 	}
 }

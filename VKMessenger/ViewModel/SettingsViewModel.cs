@@ -31,6 +31,22 @@ namespace VKMessenger.ViewModel
 		}
 
 		/// <summary>
+		/// Включены ли уведомления о новых сообщениях.
+		/// </summary>
+		public bool IsNotificationsEnabled
+		{
+			get
+			{
+				return Settings.Default.IsNotificationsEnabled;
+			}
+			set
+			{
+				Settings.Default.IsNotificationsEnabled = value;
+				OnPropertyChanged();
+			}
+		}
+
+		/// <summary>
 		/// Команда сохранения настроек.
 		/// </summary>
 		public SimpleCommand SaveSettingsCommand { get; set; }
