@@ -28,7 +28,7 @@ namespace VKMessenger.Protocol
 		private const int TIMEOUT = 10 * 1000;
 #endif
 
-		private object _lock = new object();
+		//private object _lock = new object();
 
 		private VkApi _vk;
 		public VkApi Vk { get { return _vk; } }

@@ -185,9 +185,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>7z a $(TargetDir)$(ProjectName)-$(ConfigurationName).zip $(TargetDir)*.dll
-7z a $(TargetDir)$(ProjectName)-$(ConfigurationName).zip $(TargetPath)
-7z a $(TargetDir)$(ProjectName)-$(ConfigurationName).zip $(TargetPath).config</PostBuildEvent>
+    <PostBuildEvent>
+    </PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

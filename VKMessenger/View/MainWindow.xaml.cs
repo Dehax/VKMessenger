@@ -75,5 +75,15 @@ namespace VKMessenger.View
                     break;
             }
         }
-    }
+
+		private void mainWindow_Activated(object sender, EventArgs e)
+		{
+			_viewModel.IsActivated = true;
+		}
+
+		private void mainWindow_Deactivated(object sender, EventArgs e)
+		{
+			_viewModel.IsActivated = false;
+		}
+	}
 }

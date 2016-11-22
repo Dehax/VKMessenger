@@ -1,4 +1,4 @@
-﻿<Window x:Uid="mainWindow" x:Class="VKMessenger.View.MainWindow"
+﻿<Window x:Uid="mainWindow" x:Name="mainWindow" x:Class="VKMessenger.View.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -10,7 +10,7 @@
         xmlns:vkmodel="clr-namespace:VkNet.Model;assembly=VkNet"
         xmlns:vkenums="clr-namespace:VkNet.Enums;assembly=VkNet"
         mc:Ignorable="d"
-        Title="VK Messenger" Height="362" Width="676" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Icon="/VKMessenger;component/Images/Icons/VKMessenger.ico">
+        Title="VK Messenger" Height="362" Width="676" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Icon="/VKMessenger;component/Images/Icons/VKMessenger.ico" Activated="mainWindow_Activated" Deactivated="mainWindow_Deactivated" WindowState="{Binding WindowState}">
     <Window.DataContext>
         <vm:MainViewModel x:Uid="mainViewModel" />
     </Window.DataContext>

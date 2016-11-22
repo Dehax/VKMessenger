@@ -16,3 +16,5 @@ obj/
 
 # Visual LocBaml translation project
 *.tsf
+# Windows scripts
+*.bat

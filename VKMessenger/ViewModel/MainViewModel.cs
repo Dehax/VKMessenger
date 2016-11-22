@@ -139,6 +139,46 @@ namespace VKMessenger.ViewModel
 		{
 			get { return SelectedConversationIndex >= 0 ? Conversations[SelectedConversationIndex] : null; }
 		}
+
+		private bool _isActivated = true;
+		public bool IsActivated
+		{
+			get
+			{
+				return _isActivated;
+			}
+			set
+			{
+				if (_isActivated != value)
+				{
+					_isActivated = value;
+					OnActivatedChanged(_isActivated);
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		private void OnActivatedChanged(bool isActivated)
+		{
+			if (isActivated)
+			{
+				MarkSelectedConversationAsRead();
+			}
+		}
+
+		private WindowState _windowState = WindowState.Normal;
+		public WindowState WindowState
+		{
+			get { return _windowState; }
+			set
+			{
+				if (_windowState != value)
+				{
+					_windowState = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 		#endregion
 
 		#region Команды
@@ -198,7 +238,7 @@ namespace VKMessenger.ViewModel
 					currentConversation.Messages.Add(message);
 				});
 
-				if (message.Type == MessageType.Received)
+				if (message.Type == MessageType.Received && WindowState != WindowState.Minimized && IsActivated)
 				{
 					await MarkMessagesAsRead(new long[] { message.Id.Value });
 				}
@@ -435,8 +475,6 @@ namespace VKMessenger.ViewModel
 		/// </summary>
 		protected virtual async void OnSelectedConversationChanged()
 		{
-			List<long> unreadedMessagesIds = new List<long>();
-
 			if (SelectedConversation.Messages.Count == 0)
 			{
 				// Первый выбор беседы, загрузить сообщения
@@ -448,6 +486,13 @@ namespace VKMessenger.ViewModel
 					SelectedConversation.Messages.Insert(0, new VkMessage(message, SelectedConversation));
 				}
 			}
+
+			MarkSelectedConversationAsRead();
+		}
+
+		public async void MarkSelectedConversationAsRead()
+		{
+			List<long> unreadedMessagesIds = new List<long>();
 
 			foreach (VkMessage message in SelectedConversation.Messages)
 			{

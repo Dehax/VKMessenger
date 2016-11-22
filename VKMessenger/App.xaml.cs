@@ -27,9 +27,9 @@ namespace VKMessenger
 		private Messenger _messenger = new Messenger();
 
 		private TaskbarIcon _taskbarIcon;
-
+#if !DEBUG
 		private Mutex _singleInstanceMutex;
-
+#endif
 		/// <summary>
 		/// Команда смены пользователя.
 		/// </summary>
@@ -132,7 +132,17 @@ namespace VKMessenger
 			string title = e.Message.Conversation != null ? e.Message.Conversation.Title : "Новая беседа";
 			string message = e.Message.Body;
 
-			if (Settings.Default.IsNotificationsEnabled)
+			bool showNotification = true;
+
+			MainWindow mainWindow = MainWindow as MainWindow;
+			MainViewModel vm = mainWindow?.DataContext as MainViewModel;
+
+			if (vm != null && (vm.WindowState != WindowState.Minimized || vm.IsActivated))
+			{
+				showNotification = false;
+			}
+
+			if (Settings.Default.IsNotificationsEnabled && showNotification)
 			{
 				Dispatcher.Invoke(() =>
 				{
