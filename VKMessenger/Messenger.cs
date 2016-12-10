@@ -384,5 +384,29 @@ namespace VKMessenger
 
 			Vk.UserId = User.Id;
 		}
+
+		public bool TryDecrypt(VkMessage message, out string decryptedMessageBody)
+		{
+			VkMessage decryptedMessage = null;
+			ServiceMessageType type = ServiceMessage.CheckServiceMessageType(message.Body);
+
+			bool result = false;
+
+			switch (ServiceMessage.CheckServiceMessageType(message.Body))
+			{
+			case ServiceMessageType.RequestKey:
+			case ServiceMessageType.ResponseKey:
+			case ServiceMessageType.SyncKey:
+				result = true;
+				break;
+			case ServiceMessageType.UserMessage:
+				result = _dvProto.TryParseMessage(message, out decryptedMessage, true);
+				break;
+			}
+
+			decryptedMessageBody = decryptedMessage?.Body;
+
+			return result;
+		}
 	}
 }

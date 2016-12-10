@@ -25,9 +25,6 @@ namespace VKMessenger.Protocol.Messages
 	/// </summary>
 	public abstract class UserMessage : ServiceMessage
 	{
-		//private const int SIGNATURE_SIZE = 40;
-		//private const int PUBLIC_KEY_SIZE = 444;
-
 		private UserMessageType _userMessageType = UserMessageType.Text;
 		public UserMessageType UserMessageType
 		{
@@ -94,52 +91,6 @@ namespace VKMessenger.Protocol.Messages
 			Data[0] = (byte)UserMessageType;
 			Buffer.BlockCopy(encryptedData, 0, Data, 1, encryptedData.Length);
 		}
-
-		///// <summary>
-		///// Подписывает пользовательские данные и добавляет подпись в начало.
-		///// </summary>
-		///// <param name="data">Данные, которые необходимо подписать</param>
-		///// <param name="hashAlgorithm">Алгоритм хеширования для подписи</param>
-		///// <returns>Подписанные данные</returns>
-		//private byte[] SignData(byte[] data)
-		//{
-		//	DSACryptoServiceProvider dsa = new DSACryptoServiceProvider();
-		//	byte[] signature = dsa.SignData(data);
-		//	byte[] publicKey = dsa.ExportCspBlob(false);
-		//	byte[] resultData = new byte[signature.Length + publicKey.Length + data.Length];
-		//	Buffer.BlockCopy(signature, 0, resultData, 0, signature.Length);
-		//	Buffer.BlockCopy(publicKey, 0, resultData, signature.Length, publicKey.Length);
-		//	Buffer.BlockCopy(data, 0, resultData, signature.Length + publicKey.Length, data.Length);
-		//	dsa.Dispose();
-
-		//	return resultData;
-		//}
-
-		///// <summary>
-		///// Проверяет подпись пользовательских данных.
-		///// </summary>
-		///// <param name="signedData">Подписанные данные</param>
-		///// <param name="data">Извлечённые данные без подписи</param>
-		///// <returns>Результат проверки подписи</returns>
-		//private bool CheckSignature(byte[] signedData, out byte[] data)
-		//{
-		//	bool signatureValid = false;
-
-		//	byte[] signature = new byte[SIGNATURE_SIZE];
-		//	byte[] publicKey = new byte[PUBLIC_KEY_SIZE];
-		//	byte[] content = new byte[signedData.Length - SIGNATURE_SIZE - PUBLIC_KEY_SIZE];
-		//	data = content;
-		//	Buffer.BlockCopy(signedData, 0, signature, 0, signature.Length);
-		//	Buffer.BlockCopy(signedData, signature.Length, publicKey, 0, publicKey.Length);
-		//	Buffer.BlockCopy(signedData, signature.Length + publicKey.Length, content, 0, content.Length);
-
-		//	DSACryptoServiceProvider dsa = new DSACryptoServiceProvider();
-		//	dsa.ImportCspBlob(publicKey);
-		//	signatureValid = dsa.VerifyData(content, signature);
-		//	dsa.Dispose();
-
-		//	return signatureValid;
-		//}
 
 		/// <summary>
 		/// Зашифровывает данные указанным ключом с использованием алгоритма Rijndael.

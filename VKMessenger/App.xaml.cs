@@ -133,9 +133,15 @@ namespace VKMessenger
 			string message = e.Message.Body;
 
 			bool showNotification = true;
+			
+			MainWindow mainWindow = null;
+			MainViewModel vm = null;
 
-			MainWindow mainWindow = MainWindow as MainWindow;
-			MainViewModel vm = mainWindow?.DataContext as MainViewModel;
+			Dispatcher.Invoke(() =>
+			{
+				mainWindow = MainWindow as MainWindow;
+				vm = mainWindow?.DataContext as MainViewModel;
+			});
 
 			if (vm != null && (vm.WindowState != WindowState.Minimized || vm.IsActivated))
 			{

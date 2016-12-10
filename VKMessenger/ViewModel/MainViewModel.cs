@@ -28,6 +28,16 @@ namespace VKMessenger.ViewModel
 		}
 	}
 
+	public class ConversationEventArgs : EventArgs
+	{
+		public Conversation Conversation { get; set; }
+
+		public ConversationEventArgs(Conversation conversation)
+		{
+			Conversation = conversation;
+		}
+	}
+
 	/// <summary>
 	/// Бизнес-логика основного окна мессенджера.
 	/// </summary>
@@ -201,6 +211,10 @@ namespace VKMessenger.ViewModel
 		/// Происходит при ошибке отправки сообщения.
 		/// </summary>
 		public event ErrorEventHandler ErrorSendMessage;
+		/// <summary>
+		/// Происходит при выборе беседы.
+		/// </summary>
+		public event EventHandler<ConversationEventArgs> ConversationSelected;
 		#endregion
 
 		#region MVVM
@@ -317,7 +331,7 @@ namespace VKMessenger.ViewModel
 		private async void SendMessageExecute()
 		{
 			long id = await _messenger.SendMessage(SendingMessageText, SelectedConversation, KeysStorage.GetLastDeviceId(SelectedConversation.PeerId));
-			
+
 			if (id >= 0)
 			{
 				SendingMessageText = string.Empty;
@@ -483,15 +497,37 @@ namespace VKMessenger.ViewModel
 
 				foreach (Message message in messages)
 				{
-					SelectedConversation.Messages.Insert(0, new VkMessage(message, SelectedConversation));
+					string decryptedMessageBody;
+					VkMessage vkMessage = new VkMessage(message, SelectedConversation);
+					bool decrypted = Messenger.TryDecrypt(vkMessage, out decryptedMessageBody);
+
+					if (decryptedMessageBody != null)
+					{
+						// Расшифрованное сообщение
+						vkMessage.Body = decryptedMessageBody;
+					}
+					else if (decrypted)
+					{
+						// Служебное сообщение
+						continue;
+					}
+
+					SelectedConversation.Messages.Insert(0, vkMessage);
 				}
 			}
 
 			MarkSelectedConversationAsRead();
+
+			ConversationSelected?.Invoke(this, new ConversationEventArgs(SelectedConversation));
 		}
 
 		public async void MarkSelectedConversationAsRead()
 		{
+			if (SelectedConversation == null)
+			{
+				return;
+			}
+
 			List<long> unreadedMessagesIds = new List<long>();
 
 			foreach (VkMessage message in SelectedConversation.Messages)

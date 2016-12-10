@@ -26,9 +26,21 @@ namespace VKMessenger.View
             _viewModel.NewMessage += ScrollToLastMessage;
 			_viewModel.MessageSent += ScrollToLastMessage;
 			_viewModel.ErrorSendMessage += ErrorSendMessage;
+			_viewModel.ConversationSelected += ConversationSelected;
             
             StateChanged += MainWindow_StateChanged;
         }
+
+		private void ConversationSelected(object sender, ConversationEventArgs e)
+		{
+			Dispatcher.Invoke(() =>
+			{
+				if (messagesListBox.Items.Count > 0)
+				{
+					messagesListBox.ScrollIntoView(messagesListBox.Items[messagesListBox.Items.Count - 1]);
+				}
+			});
+		}
 
 		private void ErrorSendMessage(object sender, ErrorEventArgs e)
 		{
@@ -52,7 +64,10 @@ namespace VKMessenger.View
             {
                 Dispatcher.Invoke(() =>
                 {
-                    messagesListBox.ScrollIntoView(messagesListBox.Items[messagesListBox.Items.Count - 1]);
+					if (messagesListBox.Items.Count > 0)
+					{
+						messagesListBox.ScrollIntoView(messagesListBox.Items[messagesListBox.Items.Count - 1]);
+					}
                 });
             }
         }

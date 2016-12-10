@@ -24,6 +24,6 @@ namespace VKMessenger.Protocol
 		/// <param name="message">Сообщение.</param>
 		/// <param name="result">Результат расшифровки пользовательского сообщения.</param>
 		/// <returns>Успешность разбора сообщения.</returns>
-		bool TryParseMessage(VkMessage message, out VkMessage result);
+		bool TryParseMessage(VkMessage message, out VkMessage result, bool readOnly = false);
 	}
 }

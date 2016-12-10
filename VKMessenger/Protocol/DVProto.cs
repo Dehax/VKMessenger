@@ -168,7 +168,7 @@ namespace VKMessenger.Protocol
 		/// <param name="message">Сообщение, которое необходимо разобрать.</param>
 		/// <param name="result">Результат разбора сообщения.</param>
 		/// <returns>Указывает, является ли сообщение служебным.</returns>
-		public bool TryParseMessage(VkMessage message, out VkMessage result)
+		public bool TryParseMessage(VkMessage message, out VkMessage result, bool readOnly = false)
 		{
 			result = null;
 
@@ -233,7 +233,10 @@ namespace VKMessenger.Protocol
 
 							if (!KeysStorage.FindEncryptionKey(true, userId, textUserMessage.DeviceId))
 							{
-								GenerateAndSendNewKey(message, textUserMessage.DeviceId);
+								if (!readOnly)
+								{
+									GenerateAndSendNewKey(message, textUserMessage.DeviceId);
+								}
 								break;
 							}
 
