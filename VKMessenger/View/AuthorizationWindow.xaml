@@ -1,10 +1,10 @@
-﻿<Window x:Class="VKMessenger.View.AuthorizationWindow"
+﻿<Window x:Uid="authorizationWindow" x:Class="VKMessenger.View.AuthorizationWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:VKMessenger.View"
         mc:Ignorable="d"
-        Title="Авторизация ВКонтакте" Width="672" Height="418" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Icon="/VKMessenger;component/Images/Icons/VKMessenger.ico" WindowStartupLocation="CenterScreen">
-    <WebBrowser Name="browser" />
+        Title="Авторизация ВКонтакте" Width="750" Height="500" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}" Icon="/VKMessenger;component/Images/Icons/VKMessenger.ico" WindowStartupLocation="CenterScreen">
+    <WebBrowser x:Uid="browser" x:Name="browser" />
 </Window>

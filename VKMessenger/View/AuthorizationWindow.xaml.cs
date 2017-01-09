@@ -1,23 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using System.Windows.Shapes;
 using VkNet.Enums.Filters;
 
 namespace VKMessenger.View
 {
-    public partial class AuthorizationWindow : Window
+	/// <summary>
+	/// Окно авторизации.
+	/// </summary>
+	public partial class AuthorizationWindow : Window
     {
         private long APPLICATION_ID = 5570691;
 
@@ -27,11 +19,15 @@ namespace VKMessenger.View
         public string AccessToken { get; private set; }
         public long UserId { get; private set; }
 
-        public AuthorizationWindow()
+        public AuthorizationWindow(bool revoke = false)
         {
             InitializeComponent();
             
             string url = string.Format(AUTHORIZE_URL, APPLICATION_ID, REDIRECT_URI, Settings.Messages | Settings.Offline);
+			if (revoke)
+			{
+				url += "&revoke=1";
+			}
             browser.Source = new Uri(url);
             browser.LoadCompleted += browser_LoadCompleted;
         }

@@ -1,20 +1,20 @@
-﻿using Microsoft.Win32;
+﻿using Hardcodet.Wpf.TaskbarNotification;
+using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
-using System.Configuration;
-using System.Data;
 using System.Diagnostics;
 using System.IO;
-using System.IO.IsolatedStorage;
-using System.Linq;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using VKMessenger.Properties;
 using VKMessenger.View;
 using VKMessenger.ViewModel;
+using VKMessenger.ViewModel.Commands;
 
 namespace VKMessenger
 {
@@ -22,24 +22,67 @@ namespace VKMessenger
 	{
 		private const string LOG_FILE_NAME = @"VKMessenger.log";
 
+		private bool _relogining = false;
+
 		private Messenger _messenger = new Messenger();
+
+		private TaskbarIcon _taskbarIcon;
+#if !DEBUG
+		private Mutex _singleInstanceMutex;
+#endif
+		/// <summary>
+		/// Команда смены пользователя.
+		/// </summary>
+		public SimpleCommand ReloginCommand { get; set; }
+		/// <summary>
+		/// Команда вызова настроек.
+		/// </summary>
+		public SimpleCommand SettingsCommand { get; set; }
 
 		public App()
 		{
 			ShutdownMode = ShutdownMode.OnExplicitShutdown;
-			DispatcherUnhandledException += ProcessUnhandledException;
+			AppDomain.CurrentDomain.UnhandledException += ProcessUnhandledException;
+
+			ReloginCommand = new SimpleCommand(Relogin, () => { return true; });
+			SettingsCommand = new SimpleCommand(OpenSettings, () => { return true; });
 		}
 
 		protected override void OnStartup(StartupEventArgs e)
 		{
 			base.OnStartup(e);
+#if !DEBUG
+			bool isNewInstance = false;
+			_singleInstanceMutex = new Mutex(true, nameof(VKMessenger), out isNewInstance);
+
+			if (!isNewInstance)
+			{
+				MessageBox.Show("Мессенджер уже запущен!");
+				Shutdown();
+				return;
+			}
+#endif
+			_taskbarIcon = new TaskbarIcon();
+			_taskbarIcon.ToolTip = nameof(VKMessenger);
+			_taskbarIcon.IconSource = new BitmapImage(new Uri(@"pack://application:,,,/VKMessenger;component/Images/Icons/VKMessenger.ico"));
+			_taskbarIcon.TrayMouseDoubleClick += taskbarIcon_TrayMouseDoubleClick;
+			_taskbarIcon.ContextMenu = new ContextMenu();
+			MenuItem reloginMenuItem = new MenuItem()
+			{
+				Command = ReloginCommand,
+				Header = "Сменить пользователя"
+			};
+			MenuItem settingsMenuItem = new MenuItem()
+			{
+				Command = SettingsCommand,
+				Header = "Настройки"
+			};
+			_taskbarIcon.ContextMenu.Items.Add(reloginMenuItem);
+			_taskbarIcon.ContextMenu.Items.Add(settingsMenuItem);
 
 			if (Authenticate())
 			{
-				MainWindow mainWindow = new MainWindow(_messenger);
-				MainWindow = mainWindow;
-				mainWindow.Show();
-				mainWindow.Closed += MainWindow_Closed;
+				ShowMainWindow();
 			}
 			else
 			{
@@ -47,11 +90,112 @@ namespace VKMessenger
 			}
 		}
 
-		public bool Authenticate()
+		private void taskbarIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)
+		{
+			(MainWindow as MainWindow)?.UnTrayWindow();
+		}
+		
+		protected override void OnExit(ExitEventArgs e)
+		{
+			_taskbarIcon.Dispose();
+
+			base.OnExit(e);
+		}
+
+		/// <summary>
+		/// Отображает новое окно.
+		/// </summary>
+		private void ShowMainWindow()
+		{
+			MainWindow mainWindow = new MainWindow();
+			MainViewModel vm = mainWindow.DataContext as MainViewModel;
+
+			if (vm == null)
+			{
+				throw new ArgumentNullException(nameof(vm), "MainWindow.DataContext is not MainViewModel!");
+			}
+
+			vm.Messenger = _messenger;
+			vm.Messenger.Start();
+			vm.NewMessage += NewMessage;
+
+			MainWindow = mainWindow;
+			mainWindow.Show();
+			mainWindow.Closed += MainWindow_Closed;
+		}
+
+		/// <summary>
+		/// Отображает новое сообщение уведомлениеме в трее.
+		/// </summary>
+		private void NewMessage(object sender, NewMessageEventArgs e)
+		{
+			string title = e.Message.Conversation != null ? e.Message.Conversation.Title : "Новая беседа";
+			string message = e.Message.Body;
+
+			bool showNotification = true;
+			
+			MainWindow mainWindow = null;
+			MainViewModel vm = null;
+
+			Dispatcher.Invoke(() =>
+			{
+				mainWindow = MainWindow as MainWindow;
+				vm = mainWindow?.DataContext as MainViewModel;
+			});
+
+			if (vm != null && vm.IsActivated)
+			{
+				showNotification = false;
+			}
+
+			if (Settings.Default.IsNotificationsEnabled && showNotification)
+			{
+				Dispatcher.Invoke(() =>
+				{
+					_taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
+				});
+			}
+		}
+
+		/// <summary>
+		/// Сменить пользователя.
+		/// </summary>
+		private async void Relogin()
+		{
+			_messenger.Stop();
+
+			_relogining = true;
+
+			MainWindow.Close();
+
+			Settings.Default.AccessToken = string.Empty;
+
+			await Current.Dispatcher.InvokeAsync(() => { Authenticate(true); });
+
+			_relogining = false;
+
+			ShowMainWindow();
+		}
+
+		/// <summary>
+		/// Отобразить окно настроек.
+		/// </summary>
+		private void OpenSettings()
+		{
+			SettingsWindow settingsWindow = new SettingsWindow();
+			settingsWindow.ShowDialog();
+		}
+
+		/// <summary>
+		/// Аутентифицировать.
+		/// </summary>
+		/// <param name="relogin">Запросить смену пользователя.</param>
+		/// <returns>Показывает успешность аутентификации</returns>
+		private bool Authenticate(bool relogin = false)
 		{
 			string accessToken = Settings.Default.AccessToken;
 
-			if (!string.IsNullOrWhiteSpace(accessToken))
+			if (!relogin && !string.IsNullOrWhiteSpace(accessToken))
 			{
 				if (!_messenger.Authorize(accessToken))
 				{
@@ -61,7 +205,7 @@ namespace VKMessenger
 			else
 			{
 				SetupWebBrowserEmulationVersion();
-				AuthorizationWindow authWindow = new AuthorizationWindow();
+				AuthorizationWindow authWindow = new AuthorizationWindow(relogin);
 				authWindow.ShowDialog();
 				accessToken = authWindow.AccessToken;
 
@@ -69,11 +213,10 @@ namespace VKMessenger
 				{
 					Settings.Default.AccessToken = accessToken;
 					Settings.Default.Save();
-
-					MessageBox.Show("Авторизация прошла успешно!", "Авторизовано");
 				}
 				else
 				{
+					MessageBox.Show("Ошибка авторизации!", "Не авторизован");
 					return false;
 				}
 			}
@@ -81,6 +224,9 @@ namespace VKMessenger
 			return true;
 		}
 
+		/// <summary>
+		/// Установить совместимую версию эмуляции браузера.
+		/// </summary>
 		private void SetupWebBrowserEmulationVersion()
 		{
 			string appName = Process.GetCurrentProcess().ProcessName + ".exe";
@@ -126,31 +272,35 @@ namespace VKMessenger
 
 		private void MainWindow_Closed(object sender, EventArgs e)
 		{
-			Shutdown();
+			if (!_relogining)
+			{
+				Shutdown();
+			}
 		}
 
-		private void ProcessUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+		/// <summary>
+		/// Обработать исключение на уровне приложения.
+		/// </summary>
+		private void ProcessUnhandledException(object sender, UnhandledExceptionEventArgs e)
 		{
-			string localAppDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.Create);
-
-			StringBuilder sb = new StringBuilder(localAppDataPath);
-			sb.Append(Path.DirectorySeparatorChar);
-			Assembly assembly = Assembly.GetExecutingAssembly();
-			sb.Append(assembly.GetCustomAttribute<AssemblyCompanyAttribute>().Company);
-			sb.Append(Path.DirectorySeparatorChar);
-			sb.Append(assembly.GetCustomAttribute<AssemblyProductAttribute>().Product);
-			Directory.CreateDirectory(sb.ToString());
-			sb.Append(Path.DirectorySeparatorChar);
-			sb.Append(LOG_FILE_NAME);
-			string logFilePath = sb.ToString();
+			StringBuilder localAppFolderPath = new StringBuilder(Utils.Extensions.ApplicationFolderPath);
+			localAppFolderPath.Append(Path.DirectorySeparatorChar);
+			localAppFolderPath.Append(LOG_FILE_NAME);
+			string logFilePath = localAppFolderPath.ToString();
 
 			using (StreamWriter sw = File.CreateText(logFilePath))
 			{
 				sw.WriteLine(DateTime.Now.ToString() + " - Необработанное исключение:");
-				sw.WriteLine(e.Exception);
+				Exception ex = (Exception)e.ExceptionObject;
+				StackTrace st = new StackTrace(ex, true);
+				StackFrame sf = st.GetFrame(0);
+
+				sw.WriteLine($"Номер строки, где возникло исключение: {sf.GetFileName()}:{sf.GetFileLineNumber()}:{sf.GetFileColumnNumber()}");
 			}
 
 			MessageBox.Show($"Приложение прекратило работу из-за непредвиденной ошибки. Посмотрите файл журнала \"{ logFilePath }\"", "Exception");
+
+			Process.Start(logFilePath);
 		}
 	}
 }

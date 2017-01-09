@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using VKMessenger.Model;
 using VkNet.Model;
 
 namespace VKMessenger.ViewModel.Design
 {
-    public class MessagesDesignViewModel
+	public class MessagesDesignViewModel
     {
         private ObservableCollection<VkMessage> _messages = new ObservableCollection<VkMessage>()
         {
@@ -18,7 +14,7 @@ namespace VKMessenger.ViewModel.Design
                 Body = "Тестовое сообщение 1.",
                 Date = DateTime.Now,
                 FromId = 1
-            }, new Dialog() {
+            }, new Conversation() {
                 User = new User()
                 {
                     FirstName = "Имя",
@@ -36,7 +32,7 @@ namespace VKMessenger.ViewModel.Design
                 Body = "Очень длинное тестовое сообщение.\nС переносом строки.\nПозволяет протестировать ширину шаблона.",
                 Date = DateTime.Now,
                 FromId = 2
-            }, new Dialog() {
+            }, new Conversation() {
                 User = new User()
                 {
                     FirstName = "Имя",

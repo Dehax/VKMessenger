@@ -1,19 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using VkNet.Model;
 
 namespace VKMessenger.Model
 {
-    public class Dialog : INotifyPropertyChanged
+	/// <summary>
+	/// Беседа (диалог с одним пользователем или чат с несколькими).
+	/// </summary>
+	public class Conversation : INotifyPropertyChanged
     {
-        private Messages _messages = new Messages();
-        public Messages Messages
+        private ObservableCollection<VkMessage> _messages = new ObservableCollection<VkMessage>();
+		/// <summary>
+		/// Список сообщений беседы.
+		/// </summary>
+        public ObservableCollection<VkMessage> Messages
         {
             get { return _messages; }
             set
@@ -27,6 +29,9 @@ namespace VKMessenger.Model
         }
 
         private string _photo;
+		/// <summary>
+		/// URL аватара беседы.
+		/// </summary>
         public string Photo
         {
             get
@@ -50,11 +55,17 @@ namespace VKMessenger.Model
             }
         }
 
+		/// <summary>
+		/// Является ли данная беседа чатом.
+		/// </summary>
         public bool IsChat
         {
             get { return Chat != null; }
         }
 
+		/// <summary>
+		/// ID пользователя-собеседника в случае диалога или ID чата.
+		/// </summary>
         public long PeerId
         {
             get
@@ -71,6 +82,9 @@ namespace VKMessenger.Model
         }
 
         private User _user;
+		/// <summary>
+		/// Пользователь-собеседник.
+		/// </summary>
         public User User
         {
             get { return _user; }
@@ -85,6 +99,9 @@ namespace VKMessenger.Model
         }
 
         private List<User> _users;
+		/// <summary>
+		/// Список пользователей-собеседников.
+		/// </summary>
         public List<User> Users
         {
             get { return _users; }
@@ -99,6 +116,9 @@ namespace VKMessenger.Model
         }
 
         private Chat _chat;
+		/// <summary>
+		/// Чат.
+		/// </summary>
         public Chat Chat
         {
             get { return _chat; }
@@ -112,6 +132,9 @@ namespace VKMessenger.Model
             }
         }
 
+		/// <summary>
+		/// Название беседы.
+		/// </summary>
         public string Title
         {
             get
@@ -133,13 +156,13 @@ namespace VKMessenger.Model
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public Dialog()
-        {
-        }
+		protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
+		{
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+		}
 
-        protected virtual void OnPropertyChanged([CallerMemberName]string propertyName = "")
+		public Conversation()
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

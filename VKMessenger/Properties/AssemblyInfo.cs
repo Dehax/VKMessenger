@@ -1,6 +1,5 @@
 ﻿using System.Reflection;
 using System.Resources;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 
@@ -11,7 +10,7 @@ using System.Windows;
 [assembly: AssemblyDescription("A simple VK messenger")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("DehaxSoft")]
-[assembly: AssemblyProduct("VK Messenger")]
+[assembly: AssemblyProduct("VKMessenger")]
 [assembly: AssemblyCopyright("Copyright © DehaxSoft 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -32,12 +31,12 @@ using System.Windows;
 
 
 [assembly: ThemeInfo(
-    ResourceDictionaryLocation.None, //где расположены словари ресурсов по конкретным тематикам
-                                     //(используется, если ресурс не найден на странице 
-                                     // или в словарях ресурсов приложения)
-    ResourceDictionaryLocation.SourceAssembly //где расположен словарь универсальных ресурсов
-                                              //(используется, если ресурс не найден на странице, 
-                                              // в приложении или в каких-либо словарях ресурсов для конкретной темы)
+	ResourceDictionaryLocation.None, //где расположены словари ресурсов по конкретным тематикам
+									 //(используется, если ресурс не найден на странице 
+									 // или в словарях ресурсов приложения)
+	ResourceDictionaryLocation.SourceAssembly //где расположен словарь универсальных ресурсов
+											  //(используется, если ресурс не найден на странице, 
+											  // в приложении или в каких-либо словарях ресурсов для конкретной темы)
 )]
 
 
@@ -51,7 +50,7 @@ using System.Windows;
 // Можно задать все значения или принять номера сборки и редакции по умолчанию 
 // используя "*", как показано ниже:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.2.1.2")]
-[assembly: AssemblyFileVersion("0.2.1.2")]
-[assembly: NeutralResourcesLanguage("ru")]
-
+[assembly: AssemblyVersion("0.4.0.*")]
+[assembly: AssemblyFileVersion("0.4.0.0")]
+// [assembly: NeutralResourcesLanguage("ru")]
+[assembly: NeutralResourcesLanguage("ru", UltimateResourceFallbackLocation.Satellite)]

@@ -1,24 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
 using VKMessenger.Model;
 
 namespace VKMessenger.ViewModel.Design
 {
-    public class DialogsDesignViewModel
+	public class DialogsDesignViewModel
     {
-        public Dialogs Model { get; set; } = new Dialogs(new Dialog[]
+        public ObservableCollection<Conversation> Model { get; set; } = new ObservableCollection<Conversation>(new Conversation[]
         {
-            new Dialog()
+            new Conversation()
             {
                 Chat = new VkNet.Model.Chat()
                 {
                     Title = "Чат 1"
                 }
             },
-            new Dialog()
+            new Conversation()
             {
                 User = new VkNet.Model.User()
                 {

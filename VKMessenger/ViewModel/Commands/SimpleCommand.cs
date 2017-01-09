@@ -1,23 +1,28 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace VKMessenger.ViewModel.Commands
 {
-    public class SendMessageCommand : ICommand
+	/// <summary>
+	/// Команда WPF, поддерживающая пользовательское действие и пользовательское условие активности.
+	/// </summary>
+	public class SimpleCommand : ICommand
     {
+		/// <summary>
+		/// Пользовательское действие при выполнении команды.
+		/// </summary>
         private Action _targetExecuteAction;
+		/// <summary>
+		/// Пользовательское условие проверки активности команды.
+		/// </summary>
         private Func<bool> _targetCanExecuteMethod;
 
-        public SendMessageCommand(Action executeAction)
+        public SimpleCommand(Action executeAction)
         {
             _targetExecuteAction = executeAction;
         }
 
-        public SendMessageCommand(Action executeAction, Func<bool> canExecuteMethod)
+        public SimpleCommand(Action executeAction, Func<bool> canExecuteMethod)
         {
             _targetExecuteAction = executeAction;
             _targetCanExecuteMethod = canExecuteMethod;

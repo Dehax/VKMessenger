@@ -34,5 +34,41 @@ namespace VKMessenger.Properties {
                 this["AccessToken"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool IsEncryptionEnabled {
+            get {
+                return ((bool)(this["IsEncryptionEnabled"]));
+            }
+            set {
+                this["IsEncryptionEnabled"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool IsNotificationsEnabled {
+            get {
+                return ((bool)(this["IsNotificationsEnabled"]));
+            }
+            set {
+                this["IsNotificationsEnabled"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool IsDeleteSentEncryptedMessages {
+            get {
+                return ((bool)(this["IsDeleteSentEncryptedMessages"]));
+            }
+            set {
+                this["IsDeleteSentEncryptedMessages"] = value;
+            }
+        }
     }
 }
