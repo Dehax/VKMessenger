@@ -39,15 +39,8 @@ namespace VKMessenger.Protocol.Messages
 			set { _userMessageData = value; }
 		}
 
-		//private RSACryptoServiceProvider _rsaPublicKey;
-		//protected RSACryptoServiceProvider RSAPublicKey
-		//{
-		//	get { return _rsaPublicKey; }
-		//	set { _rsaPublicKey = value; }
-		//}
-
 		/// <summary>
-		/// Создаёт, подписывает и зашифровывает пользовательское сообщение.
+		/// Создаёт пользовательское сообщение.
 		/// </summary>
 		public UserMessage()
 			: base()
@@ -56,7 +49,7 @@ namespace VKMessenger.Protocol.Messages
 		}
 
 		/// <summary>
-		/// Разбирает, расшифровывает и проверяет подпись пользовательского сообщения.
+		/// Разбирает пользовательское сообщение.
 		/// </summary>
 		/// <param name="messageBase64">Исходное служебное сообщение в Base64</param>
 		public UserMessage(string messageBase64)
@@ -97,6 +90,7 @@ namespace VKMessenger.Protocol.Messages
 		/// </summary>
 		/// <param name="data">Данные для шифрования</param>
 		/// <param name="key">Ключ Rijndael</param>
+		/// <param name="iv">Вектор инициализации Rijndael</param>
 		/// <returns></returns>
 		private byte[] EncryptData(byte[] data, byte[] key, byte[] iv)
 		{
@@ -116,6 +110,7 @@ namespace VKMessenger.Protocol.Messages
 		/// </summary>
 		/// <param name="data">Данные для расшифрования</param>
 		/// <param name="key">Ключ Rijndael</param>
+		/// <param name="iv">Вектор инициализации Rijndael</param>
 		/// <returns></returns>
 		private byte[] DecryptData(byte[] data, byte[] key, byte[] iv)
 		{

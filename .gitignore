@@ -6,7 +6,7 @@
 VKMessenger/bin/*
 !VKMessenger/bin/Release/
 VKMessenger/bin/Release/*
-!VKMessenger/bin/Release/ru/
+#!VKMessenger/bin/Release/ru/
 !VKMessenger/bin/Release/en/
 bld/
 obj/

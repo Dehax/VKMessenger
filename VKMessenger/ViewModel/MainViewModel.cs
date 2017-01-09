@@ -88,23 +88,6 @@ namespace VKMessenger.ViewModel
 			}
 		}
 
-		//private string LastDeviceId
-		//{
-		//	get
-		//	{
-		//		StringBuilder deviceIdPathSb = new StringBuilder(Utils.Extensions.ApplicationFolderPath);
-		//		deviceIdPathSb.Append(Path.DirectorySeparatorChar);
-		//		deviceIdPathSb.Append($"DeviceID-{SelectedConversation.PeerId}.xml");
-
-		//		if (!File.Exists(deviceIdPathSb.ToString()))
-		//		{
-		//			return null;
-		//		}
-
-		//		return File.ReadAllText(deviceIdPathSb.ToString(), Encoding.ASCII);
-		//	}
-		//}
-
 		private int _selectedConversationIndex = -1;
 		/// <summary>
 		/// Индекс выбранной беседы в списке.

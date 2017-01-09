@@ -28,8 +28,6 @@ namespace VKMessenger.Protocol
 		private const int TIMEOUT = 10 * 1000;
 #endif
 
-		//private object _lock = new object();
-
 		private VkApi _vk;
 		public VkApi Vk { get { return _vk; } }
 
@@ -140,10 +138,12 @@ namespace VKMessenger.Protocol
 		}
 
 		/// <summary>
-		/// Подписать, зашифровать и отправить сообщение.
+		/// Зашифровать и отправить сообщение.
 		/// </summary>
 		/// <param name="message">Сообщение для отправки</param>
 		/// <param name="userId">ID пользователя-получателя сообщения</param>
+		/// <param name="key">Ключ для шифрования сообщения</param>
+		/// <param name="iv">Вектор инициализации для шифрования сообщения</param>
 		private Task<long> EncryptAndSendMessageAsync(MessagesSendParams message, long userId, byte[] key, byte[] iv)
 		{
 			return Task.Run(() =>

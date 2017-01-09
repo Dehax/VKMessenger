@@ -143,7 +143,7 @@ namespace VKMessenger
 				vm = mainWindow?.DataContext as MainViewModel;
 			});
 
-			if (vm != null && (vm.WindowState != WindowState.Minimized || vm.IsActivated))
+			if (vm != null && vm.IsActivated)
 			{
 				showNotification = false;
 			}

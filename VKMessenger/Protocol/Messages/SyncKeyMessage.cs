@@ -17,8 +17,6 @@ namespace VKMessenger.Protocol.Messages
 
 		public byte[] Key { get; set; }
 		public byte[] IV { get; set; }
-		//public byte[] Signature { get; set; }
-		//public byte[] SignatureKey { get; set; }
 
 		/// <summary>
 		/// Создание служебного сообщения, содержащего зашифрованный симметричный ключ шифрования.
@@ -45,7 +43,6 @@ namespace VKMessenger.Protocol.Messages
 		/// Разобрать служебное сообщение, содержащее зашифрованный симметричный ключ шифрования.
 		/// </summary>
 		/// <param name="messageBase64">Текст сообщения, закодированный в Base64.</param>
-		/// <param name="rsaPrivateKey">Приватный ключ RSA для расшифровки симметричного ключа.</param>
 		public SyncKeyMessage(string messageBase64)
 			: base(messageBase64)
 		{
@@ -72,11 +69,10 @@ namespace VKMessenger.Protocol.Messages
 		}
 
 		/// <summary>
-		/// Подписывает пользовательские данные и добавляет подпись в начало.
+		/// Подписывает данные ключа.
 		/// </summary>
 		/// <param name="data">Данные, которые необходимо подписать</param>
-		/// <param name="hashAlgorithm">Алгоритм хеширования для подписи</param>
-		/// <returns>Подписанные данные</returns>
+		/// <returns>Подпись DSA(SHA-1)</returns>
 		private byte[] SignData(byte[] data)
 		{
 			DSACryptoServiceProvider dsa = new DSACryptoServiceProvider();
@@ -93,8 +89,8 @@ namespace VKMessenger.Protocol.Messages
 		/// <summary>
 		/// Проверяет подпись пользовательских данных.
 		/// </summary>
-		/// <param name="signedData">Подписанные данные</param>
-		/// <param name="data">Извлечённые данные без подписи</param>
+		/// <param name="signedData">Подпись</param>
+		/// <param name="data">Проверяемые данные</param>
 		/// <returns>Результат проверки подписи</returns>
 		private bool CheckSignature(byte[] signedData, byte[] data)
 		{

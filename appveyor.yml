@@ -47,5 +47,6 @@ deploy:
       secure: hJNjTvWa0u5NMM7SUMuO9Yr5/bF6Wd78mUebkrvhMTm9ZoT36GuH2pHZgpLoAAgT
     artifact: VKMessenger-v$(APPVEYOR_BUILD_VERSION)
     prerelease: false
+    force_update: true
     on:
       branch: master

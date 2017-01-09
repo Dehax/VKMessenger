@@ -12,11 +12,9 @@ namespace VKMessenger.Protocol.Messages
 	/// </summary>
 	public class TextUserMessage : UserMessage
 	{
-		//private string _text;
 		public string Text
 		{
 			get { return Encoding.UTF8.GetString(UserMessageData); }
-			//protected set { _text = value; }
 		}
 
 		/// <summary>
